@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Clone Studio — Prompt Builder</title>
+<style>
+  :root{
+    --bg:#0d0e12; --panel:#16181f; --panel2:#1d2029; --line:#2a2e3a;
+    --txt:#e8eaf0; --muted:#9aa0b0; --accent:#ff7a59; --accent2:#5b8cff; --good:#4ade80;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#1b1f2e 0%,var(--bg) 60%);
+    color:var(--txt);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  header{padding:26px 22px 10px;max-width:1180px;margin:0 auto;}
+  h1{margin:0;font-size:24px;letter-spacing:-.4px}
+  h1 .dot{color:var(--accent)}
+  .sub{color:var(--muted);margin-top:4px;font-size:14px}
+  .wrap{max-width:1180px;margin:0 auto;padding:14px 22px 60px;display:grid;
+    grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  @media(max-width:880px){.wrap{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .card h2{margin:0 0 14px;font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted)}
+  label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px;font-weight:600;letter-spacing:.2px}
+  input[type=text],textarea,select{width:100%;background:var(--panel2);border:1px solid var(--line);
+    color:var(--txt);border-radius:9px;padding:10px 11px;font:inherit;outline:none}
+  input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
+  textarea{resize:vertical;min-height:58px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
+  .chip{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:20px;
+    padding:5px 11px;font-size:12px;cursor:pointer;user-select:none;transition:.12s}
+  .chip:hover{border-color:var(--accent2);color:var(--txt)}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#1a1206;font-weight:600}
+  .tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .tool{flex:1 1 30%;min-width:120px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:10px;padding:10px;cursor:pointer;transition:.12s}
+  .tool:hover{border-color:var(--accent2)}
+  .tool.on{border-color:var(--accent);background:#241a14}
+  .tool b{display:block;font-size:13px}
+  .tool span{font-size:11px;color:var(--muted)}
+  .btnrow{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+  button.act{background:var(--accent);color:#1a1206;border:none;border-radius:10px;padding:12px 18px;
+    font:inherit;font-weight:700;cursor:pointer;letter-spacing:.2px}
+  button.act:hover{filter:brightness(1.07)}
+  button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:10px;
+    padding:12px 16px;font:inherit;cursor:pointer}
+  button.ghost:hover{color:var(--txt);border-color:var(--accent2)}
+  .out{background:#0a0b0f;border:1px solid var(--line);border-radius:12px;padding:16px;
+    white-space:pre-wrap;font:13.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    color:#dfe3ee;min-height:120px}
+  .out.neg{margin-top:12px;color:#ffb4a0}
+  .outlabel{display:flex;justify-content:space-between;align-items:center;margin:16px 0 7px}
+  .outlabel span{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+  .copy{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:8px;
+    padding:6px 12px;font-size:12px;cursor:pointer}
+  .copy:hover{color:var(--txt);border-color:var(--good)}
+  .copy.done{color:var(--good);border-color:var(--good)}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px}
+  .saved{font-size:11px;color:var(--good);opacity:0;transition:.3s}
+  .saved.show{opacity:1}
+  details{margin-top:10px}
+  summary{cursor:pointer;color:var(--accent2);font-size:13px}
+  .toolnote{font-size:12px;color:var(--muted);background:var(--panel2);border-left:3px solid var(--accent);
+    padding:8px 11px;border-radius:0 8px 8px 0;margin-top:12px}
+  a{color:var(--accent2)}
+</style>
+</head>
+<body>
+<header>
+  <h1>AI Clone Studio<span class="dot"> · </span>Prompt Builder</h1>
+  <div class="sub">Fuse your locked persona with the “shot on iPhone in NYC” look into a ready-to-paste prompt. Your persona saves in this browser only.</div>
+</header>
+
+<div class="wrap">
+  <!-- LEFT: inputs -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div class="card">
+      <h2>1 · Your Persona <span class="saved" id="savedFlag">saved ✓</span></h2>
+      <label>Identity tag</label>
+      <input type="text" id="tag" placeholder="e.g. ISAAC_P" />
+      <label>Face & build (one forensic sentence — reuse it every time)</label>
+      <textarea id="face" placeholder="early-30s man, light-medium warm skin, oval face, short dark wavy hair side part, trimmed stubble, brown almond eyes, straight nose, small mole left cheek, lean athletic 5'11&quot;"></textarea>
+      <label>Wardrobe / signature look</label>
+      <textarea id="wardrobe" placeholder="faded black tee, vintage Levi's, white low-top sneakers, thin silver chain, clear-frame glasses"></textarea>
+      <label>Voice (for dialogue / VO tools)</label>
+      <input type="text" id="voice" placeholder="warm medium-low, conversational, slight NYC lilt, dry humor, says 'honestly' and 'right?'" />
+      <label>Mannerisms (how you act)</label>
+      <input type="text" id="manner" placeholder="talks with hands, real half-smile, looks just off-camera, quick laugh through the nose" />
+      <button class="ghost" id="saveBtn" style="margin-top:14px">Save persona</button>
+    </div>
+
+    <div class="card">
+      <h2>2 · The Scene</h2>
+      <label>What are you doing? (the action)</label>
+      <textarea id="action" placeholder="walking and talking to camera, then stops to point at a mural"></textarea>
+      <label>Spoken line (optional — for Veo 3 / dialogue / VO)</label>
+      <textarea id="line" placeholder="Honestly? The light down here right now is stupid good."></textarea>
+
+      <div class="row">
+        <div>
+          <label>NYC location</label>
+          <select id="loc">
+            <option>Williamsburg sidewalk past a bodega</option>
+            <option>Lower East Side, neon storefronts</option>
+            <option>Brooklyn brownstone stoop</option>
+            <option>subway platform waiting for the train</option>
+            <option>inside an L train car</option>
+            <option>Manhattan rooftop with water towers</option>
+            <option>West Village cobblestone corner</option>
+            <option>DUMBO under the bridge</option>
+            <option>busy Midtown crosswalk</option>
+            <option>corner deli / bodega counter</option>
+            <option>fire escape outside an apartment</option>
+            <option>Washington Square Park</option>
+          </select>
+        </div>
+        <div>
+          <label>Time of day / light</label>
+          <select id="tod">
+            <option value="late golden-hour sun raking between the buildings, warm flare, slightly blown highlights">Golden hour</option>
+            <option value="harsh midday sun with hard shadows between buildings, bright, high contrast">Harsh noon</option>
+            <option value="soft early-morning light, empty streets, long shadows, faint mist">Early morning</option>
+            <option value="cool blue-hour dusk, city lights flicking on">Blue hour</option>
+            <option value="night, neon and storefront glow, streetlights, mixed color, grain">Night / neon</option>
+            <option value="flat overcast daylight, wet reflective pavement from earlier rain">Overcast / rainy</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Format</label>
+          <select id="fmt">
+            <option value="vertical 9:16">Vertical 9:16 (social)</option>
+            <option value="4:3 home-video">4:3 (home-video)</option>
+            <option value="horizontal 16:9">16:9 (filmed by a friend)</option>
+          </select>
+        </div>
+        <div>
+          <label>Energy</label>
+          <select id="energy">
+            <option>casual & candid</option>
+            <option>warm & reflective</option>
+            <option>energetic & funny</option>
+            <option>intimate & quiet</option>
+            <option>hyped & fast</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Style intensity</label>
+      <div class="chips" id="styleChips">
+        <span class="chip on" data-k="skin">raw skin texture</span>
+        <span class="chip on" data-k="handheld">handheld shake</span>
+        <span class="chip on" data-k="grain">sensor grain</span>
+        <span class="chip on" data-k="life">background city life</span>
+        <span class="chip" data-k="weather">weather on lens</span>
+        <span class="chip" data-k="selfie">selfie / arm's length</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3 · Target Tool</h2>
+      <div class="tools" id="tools">
+        <div class="tool on" data-t="veo"><b>Veo 3</b><span>video + native audio</span></div>
+        <div class="tool" data-t="sora"><b>Sora 2</b><span>physical motion</span></div>
+        <div class="tool" data-t="kling"><b>Kling 2.x</b><span>image→video</span></div>
+        <div class="tool" data-t="runway"><b>Runway</b><span>Gen-4 video</span></div>
+        <div class="tool" data-t="mj"><b>Midjourney</b><span>still + --cref</span></div>
+        <div class="tool" data-t="flux"><b>Flux + LoRA</b><span>still</span></div>
+        <div class="tool" data-t="eleven"><b>ElevenLabs</b><span>voice VO</span></div>
+        <div class="tool" data-t="hedra"><b>HeyGen/Hedra</b><span>lip-sync</span></div>
+      </div>
+      <div class="toolnote" id="toolnote"></div>
+      <div class="btnrow">
+        <button class="act" id="genBtn">Generate prompt →</button>
+        <button class="ghost" id="randBtn">🎲 Surprise scene</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: output -->
+  <div class="card" style="position:sticky;top:14px">
+    <h2>Output</h2>
+    <div class="outlabel"><span>Prompt</span><button class="copy" id="copyP">Copy</button></div>
+    <div class="out" id="outP">Fill in the scene and hit <b>Generate</b>.</div>
+
+    <div id="negWrap" style="display:none">
+      <div class="outlabel"><span>Negative / avoid</span><button class="copy" id="copyN">Copy</button></div>
+      <div class="out neg" id="outN"></div>
+    </div>
+
+    <div id="settingsWrap" style="display:none">
+      <div class="outlabel"><span>Recommended settings</span></div>
+      <div class="out" id="outS"></div>
+    </div>
+
+    <div class="hint">Tip: keep the same persona sentence across every render — consistency of wording is what keeps your face from drifting. Start a story by nailing one 8-second clip before scaling.</div>
+    <details>
+      <summary>How this prompt is built</summary>
+      <div class="hint">Each prompt = <b>persona layer</b> (your locked face/wardrobe/voice) + <b>scene</b> (action, location, time) + <b>style layer</b> (the iPhone/NYC look from <code>style/iphone-nyc-aesthetic.md</code>), formatted for the selected tool. Edit any field and regenerate.</div>
+    </details>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const PFIELDS = ["tag","face","wardrobe","voice","manner"];
+
+// ---- persona persistence ----
+function loadPersona(){
+  try{
+    const p = JSON.parse(localStorage.getItem("aiclone_persona")||"{}");
+    PFIELDS.forEach(f=>{ if(p[f]) $(f).value = p[f]; });
+  }catch(e){}
+}
+function savePersona(){
+  const p={}; PFIELDS.forEach(f=>p[f]=$(f).value.trim());
+  localStorage.setItem("aiclone_persona", JSON.stringify(p));
+  const fl=$("savedFlag"); fl.classList.add("show"); setTimeout(()=>fl.classList.remove("show"),1400);
+}
+$("saveBtn").onclick = savePersona;
+PFIELDS.forEach(f=>$(f).addEventListener("change", savePersona));
+loadPersona();
+
+// ---- chips ----
+document.querySelectorAll("#styleChips .chip").forEach(c=>c.onclick=()=>c.classList.toggle("on"));
+function chipOn(k){ return document.querySelector('#styleChips .chip[data-k="'+k+'"]').classList.contains("on"); }
+
+// ---- tool select ----
+let tool="veo";
+const NOTES = {
+  veo:"Veo 3 renders synced audio + dialogue — put the spoken line in quotes; often no separate lip-sync needed. Keep dialogue short for 8s.",
+  sora:"Sora 2 excels at physics & continuous action. Describe one clear physical action; it handles motion well.",
+  kling:"Image→video: generate an on-model still first (MJ/Flux), then paste THIS as the motion prompt. Keep motion small so the face doesn't warp.",
+  runway:"Runway Gen-4: concise motion + camera description works best. Image-to-video for face consistency.",
+  mj:"Add your character reference URL after --cref and tune --cw (character weight). --style raw keeps it photographic.",
+  flux:"Use with your trained character LoRA; the tag triggers your likeness. Great for thumbnails & reference frames.",
+  eleven:"This outputs a VO script + clone settings, not a visual prompt. Write the line the way you actually talk.",
+  hedra:"Lip-sync tool: provide an on-model photo + your ElevenLabs audio. This outputs the framing description + a reminder to run the finishing pass."
+};
+document.querySelectorAll("#tools .tool").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll("#tools .tool").forEach(x=>x.classList.remove("on"));
+  t.classList.add("on"); tool=t.dataset.t; $("toolnote").textContent=NOTES[tool];
+});
+$("toolnote").textContent = NOTES.veo;
+
+// ---- random scene ----
+const RAND_ACT = ["walking and talking to camera","leaning on a wall mid-story","grabbing a coffee and turning to camera","sitting on the stoop laughing","pointing out something across the street","walking down into the subway","fixing his jacket while talking","crossing the street with the crowd"];
+const RAND_LINE = ["Honestly? The light down here right now is stupid good.","Okay quick story, then I'll let you go.","I almost didn't film this.","New York does this thing in the summer, I swear.","Real talk for a second.",""];
+$("randBtn").onclick=()=>{
+  $("action").value = RAND_ACT[Math.floor(Math.random()*RAND_ACT.length)];
+  $("line").value = RAND_LINE[Math.floor(Math.random()*RAND_LINE.length)];
+  $("loc").selectedIndex = Math.floor(Math.random()*$("loc").options.length);
+  $("tod").selectedIndex = Math.floor(Math.random()*$("tod").options.length);
+  generate();
+};
+
+// ---- style layer ----
+function styleLayer(fmt){
+  const bits=[];
+  bits.push("shot on an iPhone, main wide 26mm lens, "+fmt+", deep depth of field so the scene stays mostly in focus, slight wide-angle distortion, faint lens flare");
+  if(chipOn("handheld")) bits.push("handheld with natural camera shake and small reframing corrections, autofocus hunting, not gimbal-smooth, not cinematic");
+  bits.push("available natural light only");
+  if(chipOn("skin")) bits.push("hyper-realistic, candid, natural skin texture with visible pores and minor imperfections, not retouched, authentic micro-expressions");
+  if(chipOn("life")) bits.push("real NYC background life — passersby, traffic, yellow cabs, steam, scaffolding");
+  if(chipOn("weather")) bits.push("a few drops and a faint smudge on the lens");
+  if(chipOn("grain")) bits.push("looks like real amateur iPhone footage, light sensor noise in the shadows, mild HDR over-sharpening, slight compression");
+  if(chipOn("selfie")) bits.push("held at arm's length like a selfie video");
+  return bits.join(". ");
+}
+const NEG = "cinematic, glossy, studio lighting, ring light, shallow bokeh, gimbal-smooth or drone motion, plastic smooth airbrushed skin, over-saturated, stock-footage look, perfect symmetry, AI artifacts, extra fingers, warped face";
+
+function personaSentence(){
+  const tag=$("tag").value.trim(), face=$("face").value.trim(), wb=$("wardrobe").value.trim();
+  let s = (tag?tag+", ":"") + (face||"[fill in your face description in the Persona panel]");
+  if(wb) s += ", wearing "+wb;
+  return s;
+}
+
+function generate(){
+  const persona=personaSentence();
+  const action=$("action").value.trim()||"talking to camera";
+  const line=$("line").value.trim();
+  const loc=$("loc").value, tod=$("tod").value, fmt=$("fmt").value, energy=$("energy").value;
+  const manner=$("manner").value.trim(), voice=$("voice").value.trim();
+  const style=styleLayer(fmt);
+  let prompt="", neg="", settings="";
+
+  const sceneCore = `${persona}, ${action}, at a ${loc}, ${tod}. ${energy}${manner?", "+manner:""}.`;
+
+  if(tool==="veo"||tool==="sora"||tool==="runway"){
+    prompt = `A candid ${fmt} video. ${sceneCore}`;
+    if(line) prompt += `\n\nHe says, casually${voice?" ("+voice+")":""}, looking just off-camera: "${line}"`;
+    prompt += `\n\n${style}.`;
+    if(tool==="veo") prompt += " Natural synced audio: his voice plus real NYC street ambience — distant traffic, chatter, a far-off siren.";
+    if(tool==="sora") prompt += " Continuous realistic motion and physics.";
+    neg = NEG;
+  }
+  else if(tool==="kling"){
+    prompt = `[MOTION PROMPT — apply to your on-model start frame of ${persona} at a ${loc}]\n\n`+
+      `${action}. Subtle handheld camera shake, a gentle breeze, city traffic and pedestrians move naturally in the background. Realistic candid iPhone footage, natural motion, the face stays locked and does not morph. Keep the motion small and clean.`;
+    if(line) prompt += `\nMouth moves as if saying: "${line}".`;
+    neg = NEG+", morphing face, identity drift";
+  }
+  else if(tool==="mj"){
+    prompt = `${sceneCore} ${style}. candid iPhone snapshot --ar ${fmt.includes("9:16")?"9:16":fmt.includes("16:9")?"16:9":"4:3"} --style raw --cref <YOUR_REFERENCE_IMAGE_URL> --cw 80`;
+    neg = "(use --no for MJ) --no studio lighting, bokeh, glossy, plastic skin";
+  }
+  else if(tool==="flux"){
+    const tag=$("tag").value.trim()||"<your_lora_token>";
+    prompt = `photo of ${tag}, ${action}, at a ${loc}, ${tod}. ${$("wardrobe").value.trim()?"wearing "+$("wardrobe").value.trim()+". ":""}${style}.`;
+    neg = NEG;
+    settings = "Use your trained character LoRA. Guidance ~3.5, 28–32 steps. Lower LoRA weight slightly (~0.8) if the face looks 'baked'.";
+  }
+  else if(tool==="eleven"){
+    prompt = (line||"Honestly? ... I almost didn't film this. But the light down here is just— it's stupid good right now. So. Quick thought, then I'll let you go.")
+      + "\n\n[Write it how you talk: keep fillers, use ... and — for pauses, break lines where you'd breathe.]";
+    settings = "Professional Voice Clone from a clean 2–3 min sample.\nStability ~45%  ·  Similarity ~80%  ·  Style low-moderate  ·  Speaker Boost ON.\nGenerate 2–3 takes; keep a 'breath'/'uh' take to sprinkle realism in the edit.";
+  }
+  else if(tool==="hedra"){
+    prompt = `[Lip-sync setup] Provide: (1) an on-model photo of ${persona}, framed as ${chipOn("selfie")?"a selfie held at arm's length":"a casual phone shot"} at a ${loc}, ${tod}; (2) your ElevenLabs audio of the line${line?': "'+line+'"':""}.\n\nThen run the result through the finishing pass — add handheld jitter, light grain, and an NYC ambient audio bed so the talking head doesn't look too clean.`;
+    settings = "After lip-sync: in CapCut/Premiere add subtle position-keyframe jitter, a light grain overlay, NYC room-tone under the VO, and a 9:16 slightly off-center crop. Add an AI-disclosure label.";
+  }
+
+  $("outP").textContent = prompt;
+  $("negWrap").style.display = neg ? "block":"none";  $("outN").textContent = neg;
+  $("settingsWrap").style.display = settings ? "block":"none"; $("outS").textContent = settings;
+}
+$("genBtn").onclick = generate;
+
+// copy buttons
+function bindCopy(btnId, srcId){
+  $(btnId).onclick=()=>{
+    navigator.clipboard.writeText($(srcId).textContent).then(()=>{
+      const b=$(btnId); b.classList.add("done"); const t=b.textContent; b.textContent="Copied ✓";
+      setTimeout(()=>{b.classList.remove("done");b.textContent=t;},1300);
+    });
+  };
+}
+bindCopy("copyP","outP"); bindCopy("copyN","outN");
+</script>
+</body>
+</html>
