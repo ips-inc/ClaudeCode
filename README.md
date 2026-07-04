@@ -69,6 +69,7 @@ TOOLSTACK.md                       ← what to buy/use + what to upload (the ful
 docs/photo-generation.md           ← making photoreal stills of your clone (the foundation)
 docs/higgsfield.md                 ← Higgsfield CLI/MCP setup + full clone pipeline
 REFERENCES.md                      ← best-results spec for what/how to upload
+docs/recording-guide.md            ← how to record voice/video to sound real, not robotic
 scripts/higgsfield-clone.sh        ← run locally: upload → train Soul ID → on-model still
 scripts/audit-references.py        ← grade your reference folder before uploading
 persona/persona-template.md        ← blank identity spec to copy & fill

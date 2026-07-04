@@ -20,7 +20,7 @@
 - **Lips:** full, even resting mouth; wide genuine smile
 - **Teeth / smile:** bright, warm, natural smile; relaxed and open when smiling
 - **Facial hair:** thin mustache + small goatee / soul-patch under the lower lip; light stubble along the jaw (occasionally grown in a touch)
-- **Hair:** ⚠️ **two looks on file — pick the canonical one:** (a) natural short dark 4C coils with a crisp barber line-up + taper fade, or (b) platinum-blonde buzzed cut. *Recommend locking ONE as current for the first model so the likeness doesn't blend the two.*
+- **Hair (CANONICAL — locked):** natural **4C mini-fro with a taper**, dark, crisp barber line-up. This is the current, on-model look; train the likeness on this. (The bleached-blonde buzz is an older/alternate look — exclude from the primary model.)
 - **Distinguishing marks:** forearm tattoos (see §3); ⚠️ note any moles/scars you want preserved (small mark near left cheek/neck?)
 
 ## 3. Body & bearing
