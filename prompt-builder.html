@@ -65,6 +65,13 @@
   .toolnote{font-size:12px;color:var(--muted);background:var(--panel2);border-left:3px solid var(--accent);
     padding:8px 11px;border-radius:0 8px 8px 0;margin-top:12px}
   a{color:var(--accent2)}
+  .seg{display:flex;gap:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+    overflow:hidden;margin-top:4px}
+  .seg button{flex:1;background:transparent;border:none;color:var(--muted);padding:11px 10px;
+    font:inherit;font-weight:600;cursor:pointer;transition:.12s}
+  .seg button.on{background:var(--accent);color:#1a1206}
+  .seg button:not(.on):hover{color:var(--txt)}
+  .seg button small{display:block;font-size:10px;font-weight:400;opacity:.8;margin-top:1px}
 </style>
 </head>
 <body>
@@ -94,6 +101,11 @@
 
     <div class="card">
       <h2>2 · The Scene</h2>
+      <label>Look — how is this "shot"?</label>
+      <div class="seg" id="lookSeg">
+        <button class="on" data-look="iphone">📱 iPhone-real<small>candid, handheld, personal</small></button>
+        <button data-look="pro">🎬 Professionally shot<small>cinematic, graded, premium</small></button>
+      </div>
       <label>What are you doing? (the action)</label>
       <textarea id="action" placeholder="walking and talking to camera, then stops to point at a mural"></textarea>
       <label>Spoken line (optional — for Veo 3 / dialogue / VO)</label>
@@ -168,6 +180,7 @@
         <div class="tool on" data-t="veo"><b>Veo 3</b><span>video + native audio</span></div>
         <div class="tool" data-t="sora"><b>Sora 2</b><span>physical motion</span></div>
         <div class="tool" data-t="kling"><b>Kling 2.x</b><span>image→video</span></div>
+        <div class="tool" data-t="higgs"><b>Higgsfield</b><span>cinematic motion</span></div>
         <div class="tool" data-t="runway"><b>Runway</b><span>Gen-4 video</span></div>
         <div class="tool" data-t="mj"><b>Midjourney</b><span>still + --cref</span></div>
         <div class="tool" data-t="flux"><b>Flux + LoRA</b><span>still</span></div>
@@ -226,9 +239,26 @@ $("saveBtn").onclick = savePersona;
 PFIELDS.forEach(f=>$(f).addEventListener("change", savePersona));
 loadPersona();
 
-// ---- chips ----
-document.querySelectorAll("#styleChips .chip").forEach(c=>c.onclick=()=>c.classList.toggle("on"));
-function chipOn(k){ return document.querySelector('#styleChips .chip[data-k="'+k+'"]').classList.contains("on"); }
+// ---- look mode (iPhone vs Professional) ----
+let look="iphone";
+const CHIPSETS = {
+  iphone:[["skin","raw skin texture",1],["handheld","handheld shake",1],["grain","sensor grain",1],
+          ["life","background city life",1],["weather","weather on lens",0],["selfie","selfie / arm's length",0]],
+  pro:[["skin","real skin (not airbrushed)",1],["bokeh","shallow depth / bokeh",1],["haze","volumetric haze",1],
+       ["grade","filmic color grade",1],["practical","practical lights in frame",0],["anamorphic","anamorphic flares",0]]
+};
+function renderChips(){
+  const wrap=$("styleChips");
+  wrap.innerHTML = CHIPSETS[look].map(([k,label,on])=>
+    `<span class="chip${on?" on":""}" data-k="${k}">${label}</span>`).join("");
+  wrap.querySelectorAll(".chip").forEach(c=>c.onclick=()=>c.classList.toggle("on"));
+}
+function chipOn(k){ const el=document.querySelector('#styleChips .chip[data-k="'+k+'"]'); return el&&el.classList.contains("on"); }
+document.querySelectorAll("#lookSeg button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#lookSeg button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); look=b.dataset.look; renderChips();
+});
+renderChips();
 
 // ---- tool select ----
 let tool="veo";
@@ -236,6 +266,7 @@ const NOTES = {
   veo:"Veo 3 renders synced audio + dialogue — put the spoken line in quotes; often no separate lip-sync needed. Keep dialogue short for 8s.",
   sora:"Sora 2 excels at physics & continuous action. Describe one clear physical action; it handles motion well.",
   kling:"Image→video: generate an on-model still first (MJ/Flux), then paste THIS as the motion prompt. Keep motion small so the face doesn't warp.",
+  higgs:"Higgsfield shines on cinematic camera moves. Start from an on-model frame, pick a camera preset (push-in / crane / orbit / FPV / bullet-time), and use this as the motion description. Best paired with the Professional look.",
   runway:"Runway Gen-4: concise motion + camera description works best. Image-to-video for face consistency.",
   mj:"Add your character reference URL after --cref and tune --cw (character weight). --style raw keeps it photographic.",
   flux:"Use with your trained character LoRA; the tag triggers your likeness. Great for thumbnails & reference frames.",
@@ -262,17 +293,31 @@ $("randBtn").onclick=()=>{
 // ---- style layer ----
 function styleLayer(fmt){
   const bits=[];
-  bits.push("shot on an iPhone, main wide 26mm lens, "+fmt+", deep depth of field so the scene stays mostly in focus, slight wide-angle distortion, faint lens flare");
-  if(chipOn("handheld")) bits.push("handheld with natural camera shake and small reframing corrections, autofocus hunting, not gimbal-smooth, not cinematic");
-  bits.push("available natural light only");
-  if(chipOn("skin")) bits.push("hyper-realistic, candid, natural skin texture with visible pores and minor imperfections, not retouched, authentic micro-expressions");
-  if(chipOn("life")) bits.push("real NYC background life — passersby, traffic, yellow cabs, steam, scaffolding");
-  if(chipOn("weather")) bits.push("a few drops and a faint smudge on the lens");
-  if(chipOn("grain")) bits.push("looks like real amateur iPhone footage, light sensor noise in the shadows, mild HDR over-sharpening, slight compression");
-  if(chipOn("selfie")) bits.push("held at arm's length like a selfie video");
+  if(look==="iphone"){
+    bits.push("shot on an iPhone, main wide 26mm lens, "+fmt+", deep depth of field so the scene stays mostly in focus, slight wide-angle distortion, faint lens flare");
+    if(chipOn("handheld")) bits.push("handheld with natural camera shake and small reframing corrections, autofocus hunting, not gimbal-smooth, not cinematic");
+    bits.push("available natural light only");
+    if(chipOn("skin")) bits.push("hyper-realistic, candid, natural skin texture with visible pores and minor imperfections, not retouched, authentic micro-expressions");
+    if(chipOn("life")) bits.push("real NYC background life — passersby, traffic, yellow cabs, steam, scaffolding");
+    if(chipOn("weather")) bits.push("a few drops and a faint smudge on the lens");
+    if(chipOn("grain")) bits.push("looks like real amateur iPhone footage, light sensor noise in the shadows, mild HDR over-sharpening, slight compression");
+    if(chipOn("selfie")) bits.push("held at arm's length like a selfie video");
+  } else {
+    bits.push("shot on a cinema camera, "+fmt+", commercial / short-film production quality, deliberate composition with foreground-midground-background depth");
+    if(chipOn("bokeh")) bits.push("anamorphic prime lens, shallow depth of field with creamy bokeh, subject sharply separated from the background");
+    bits.push("designed cinematic lighting — soft key with a rim light separating the subject, warm-cool color contrast");
+    if(chipOn("practical")) bits.push("practical lights in frame for depth");
+    if(chipOn("haze")) bits.push("volumetric haze and soft god rays, atmosphere");
+    if(chipOn("skin")) bits.push("hyper-realistic, natural skin texture with visible pores, flattered by lighting not retouching, not airbrushed, photoreal");
+    if(chipOn("grade")) bits.push("filmic color grade with film emulation, rich controlled color, gentle highlight roll-off, cinematic contrast");
+    if(chipOn("anamorphic")) bits.push("subtle anamorphic lens flares and lens breathing");
+    bits.push("smooth deliberate motivated camera movement (slow push-in / dolly), gimbal-stable, high production value");
+  }
   return bits.join(". ");
 }
-const NEG = "cinematic, glossy, studio lighting, ring light, shallow bokeh, gimbal-smooth or drone motion, plastic smooth airbrushed skin, over-saturated, stock-footage look, perfect symmetry, AI artifacts, extra fingers, warped face";
+const NEG_IPHONE = "cinematic, glossy, studio lighting, ring light, shallow bokeh, gimbal-smooth or drone motion, plastic smooth airbrushed skin, over-saturated, stock-footage look, perfect symmetry, AI artifacts, extra fingers, warped face";
+const NEG_PRO = "flat lighting, amateur snapshot, phone-camera look, harsh on-camera flash, muddy color, plastic smooth airbrushed skin, over-sharpened, cluttered background, blown-out video look, AI artifacts, extra fingers, warped face";
+function negFor(extra){ return (look==="iphone"?NEG_IPHONE:NEG_PRO)+(extra||""); }
 
 function personaSentence(){
   const tag=$("tag").value.trim(), face=$("face").value.trim(), wb=$("wardrobe").value.trim();
@@ -292,28 +337,44 @@ function generate(){
 
   const sceneCore = `${persona}, ${action}, at a ${loc}, ${tod}. ${energy}${manner?", "+manner:""}.`;
 
+  const isPro = look==="pro";
   if(tool==="veo"||tool==="sora"||tool==="runway"){
-    prompt = `A candid ${fmt} video. ${sceneCore}`;
-    if(line) prompt += `\n\nHe says, casually${voice?" ("+voice+")":""}, looking just off-camera: "${line}"`;
+    prompt = `A ${isPro?"cinematic":"candid"} ${fmt} ${isPro?"film shot":"video"}. ${sceneCore}`;
+    if(line) prompt += `\n\nHe says${isPro?", to camera":", casually, looking just off-camera"}${voice?" ("+voice+")":""}: "${line}"`;
     prompt += `\n\n${style}.`;
-    if(tool==="veo") prompt += " Natural synced audio: his voice plus real NYC street ambience — distant traffic, chatter, a far-off siren.";
+    if(tool==="veo") prompt += isPro
+      ? " Natural synced audio: his clean voice over a subtle scored music bed and designed room tone."
+      : " Natural synced audio: his voice plus real NYC street ambience — distant traffic, chatter, a far-off siren.";
     if(tool==="sora") prompt += " Continuous realistic motion and physics.";
-    neg = NEG;
+    neg = negFor();
   }
   else if(tool==="kling"){
+    const motion = isPro
+      ? "Smooth deliberate camera push-in, subject in sharp focus with soft bokeh behind, subtle atmosphere, cinematic and controlled, the face stays locked and does not morph."
+      : "Subtle handheld camera shake, a gentle breeze, city traffic and pedestrians move naturally in the background, realistic candid iPhone footage, the face stays locked and does not morph.";
     prompt = `[MOTION PROMPT — apply to your on-model start frame of ${persona} at a ${loc}]\n\n`+
-      `${action}. Subtle handheld camera shake, a gentle breeze, city traffic and pedestrians move naturally in the background. Realistic candid iPhone footage, natural motion, the face stays locked and does not morph. Keep the motion small and clean.`;
+      `${action}. ${motion} Keep the motion small and clean.`;
     if(line) prompt += `\nMouth moves as if saying: "${line}".`;
-    neg = NEG+", morphing face, identity drift";
+    neg = negFor(", morphing face, identity drift");
+  }
+  else if(tool==="higgs"){
+    prompt = `[Higgsfield — apply to your on-model start frame of ${persona} at a ${loc}, ${tod}]\n\n`+
+      `Camera move: choose a preset — slow push-in / crane up / orbit / FPV whip / bullet-time — motivated by the moment.\n`+
+      `${action}. ${style}. The face stays locked and does not morph.`;
+    if(line) prompt += `\nHe delivers the line to camera: "${line}".`;
+    settings = "Pick the camera preset that matches the beat (push-in for a key line, crane for a reveal, orbit to show the outfit). Keep the subject on-model — start from a Flux/MJ frame of your clone. Pair with the 🎬 Professional look for hero pieces.";
+    neg = negFor(", morphing face, identity drift");
   }
   else if(tool==="mj"){
-    prompt = `${sceneCore} ${style}. candid iPhone snapshot --ar ${fmt.includes("9:16")?"9:16":fmt.includes("16:9")?"16:9":"4:3"} --style raw --cref <YOUR_REFERENCE_IMAGE_URL> --cw 80`;
-    neg = "(use --no for MJ) --no studio lighting, bokeh, glossy, plastic skin";
+    const tail = isPro ? "cinematic film still, shallow depth of field" : "candid iPhone snapshot";
+    prompt = `${sceneCore} ${style}. ${tail} --ar ${fmt.includes("9:16")?"9:16":fmt.includes("16:9")?"16:9":"4:3"} --style raw --cref <YOUR_REFERENCE_IMAGE_URL> --cw 80`;
+    neg = isPro ? "(use --no for MJ) --no flat lighting, snapshot, phone-camera look, plastic skin"
+                : "(use --no for MJ) --no studio lighting, bokeh, glossy, plastic skin";
   }
   else if(tool==="flux"){
     const tag=$("tag").value.trim()||"<your_lora_token>";
     prompt = `photo of ${tag}, ${action}, at a ${loc}, ${tod}. ${$("wardrobe").value.trim()?"wearing "+$("wardrobe").value.trim()+". ":""}${style}.`;
-    neg = NEG;
+    neg = negFor();
     settings = "Use your trained character LoRA. Guidance ~3.5, 28–32 steps. Lower LoRA weight slightly (~0.8) if the face looks 'baked'.";
   }
   else if(tool==="eleven"){
@@ -322,8 +383,12 @@ function generate(){
     settings = "Professional Voice Clone from a clean 2–3 min sample.\nStability ~45%  ·  Similarity ~80%  ·  Style low-moderate  ·  Speaker Boost ON.\nGenerate 2–3 takes; keep a 'breath'/'uh' take to sprinkle realism in the edit.";
   }
   else if(tool==="hedra"){
-    prompt = `[Lip-sync setup] Provide: (1) an on-model photo of ${persona}, framed as ${chipOn("selfie")?"a selfie held at arm's length":"a casual phone shot"} at a ${loc}, ${tod}; (2) your ElevenLabs audio of the line${line?': "'+line+'"':""}.\n\nThen run the result through the finishing pass — add handheld jitter, light grain, and an NYC ambient audio bed so the talking head doesn't look too clean.`;
-    settings = "After lip-sync: in CapCut/Premiere add subtle position-keyframe jitter, a light grain overlay, NYC room-tone under the VO, and a 9:16 slightly off-center crop. Add an AI-disclosure label.";
+    const framing = look==="pro" ? "a cinematically lit close-up, soft key and rim light, shallow depth of field"
+                  : (chipOn("selfie")?"a selfie held at arm's length":"a casual phone shot");
+    prompt = `[Lip-sync setup] Provide: (1) an on-model photo of ${persona}, framed as ${framing} at a ${loc}, ${tod}; (2) your ElevenLabs audio of the line${line?': "'+line+'"':""}.\n\nThen run the result through the ${look==="pro"?"professional":"iPhone"} finishing pass.`;
+    settings = look==="pro"
+      ? "After lip-sync: apply a filmic LUT, light film grain, scored music + designed room tone, and upscale through Topaz. Add an AI-disclosure label."
+      : "After lip-sync: in CapCut/Premiere add subtle position-keyframe jitter, a light grain overlay, NYC room-tone under the VO, and a 9:16 slightly off-center crop. Add an AI-disclosure label.";
   }
 
   $("outP").textContent = prompt;

@@ -64,12 +64,19 @@ Start small: nail **one** 8-second clip end to end before scaling to a content c
 
 ```
 README.md                          ← you are here
+TOOLSTACK.md                       ← what to buy/use + what to upload (the full rig)
 persona/persona-template.md        ← blank identity spec to copy & fill
 persona/persona.md                 ← your filled-in clone (you create this)
 style/iphone-nyc-aesthetic.md      ← the "shot on iPhone in NYC" look bible
+style/cinematic-look.md            ← the "professionally shot" look bible
 prompts/example-recipes.md         ← full worked prompt examples per tool
-prompt-builder.html                ← interactive prompt generator (the centerpiece)
+prompt-builder.html                ← interactive prompt generator (iPhone/Pro toggle)
+content-planner.html               ← batch a series of ready-to-shoot briefs
 ```
+
+**New here?** Read `TOOLSTACK.md` first — it lays out the exact tools, the three
+identity assets to build (face model, voice clone, talking avatar), and the reference
+data to upload.
 
 ---
 
