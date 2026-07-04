@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Clone Studio — Content Planner</title>
+<style>
+  :root{
+    --bg:#0d0e12; --panel:#16181f; --panel2:#1d2029; --line:#2a2e3a;
+    --txt:#e8eaf0; --muted:#9aa0b0; --accent:#ff7a59; --accent2:#5b8cff; --good:#4ade80;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#1b1f2e 0%,var(--bg) 60%);
+    color:var(--txt);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  header{padding:26px 22px 6px;max-width:1180px;margin:0 auto;}
+  h1{margin:0;font-size:24px;letter-spacing:-.4px}
+  h1 .dot{color:var(--accent)}
+  .sub{color:var(--muted);margin-top:4px;font-size:14px}
+  .nav{max-width:1180px;margin:0 auto;padding:2px 22px 0;font-size:13px}
+  .nav a{color:var(--accent2);text-decoration:none;margin-right:14px}
+  .wrap{max-width:1180px;margin:0 auto;padding:14px 22px 60px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
+  .card h2{margin:0 0 14px;font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted)}
+  label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px;font-weight:600}
+  input[type=text],textarea,select{width:100%;background:var(--panel2);border:1px solid var(--line);
+    color:var(--txt);border-radius:9px;padding:10px 11px;font:inherit;outline:none}
+  input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
+  .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  @media(max-width:760px){.row{grid-template-columns:1fr}}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
+  .chip{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:20px;
+    padding:6px 12px;font-size:12px;cursor:pointer;user-select:none;transition:.12s}
+  .chip:hover{border-color:var(--accent2);color:var(--txt)}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#1a1206;font-weight:600}
+  .btnrow{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+  button.act{background:var(--accent);color:#1a1206;border:none;border-radius:10px;padding:12px 18px;
+    font:inherit;font-weight:700;cursor:pointer}
+  button.act:hover{filter:brightness(1.07)}
+  button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:10px;
+    padding:12px 16px;font:inherit;cursor:pointer}
+  button.ghost:hover{color:var(--txt);border-color:var(--accent2)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .brief{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;position:relative}
+  .brief .day{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent)}
+  .brief h3{margin:4px 0 8px;font-size:16px;line-height:1.25}
+  .brief .meta{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .brief .meta b{color:var(--txt);font-weight:600}
+  .brief .hook{font-size:13px;margin:8px 0}
+  .brief .line{font-size:13px;font-style:italic;color:#dfe3ee;border-left:3px solid var(--accent2);
+    padding:4px 0 4px 10px;margin:8px 0}
+  .brief .tags{font-size:11px;color:var(--muted);margin-top:8px}
+  .brief .copy{position:absolute;top:12px;right:12px;background:var(--panel);border:1px solid var(--line);
+    color:var(--muted);border-radius:7px;padding:4px 9px;font-size:11px;cursor:pointer}
+  .brief .copy:hover{color:var(--good);border-color:var(--good)}
+  .brief .copy.done{color:var(--good);border-color:var(--good)}
+  .empty{color:var(--muted);text-align:center;padding:30px}
+  .hint{font-size:12px;color:var(--muted);margin-top:10px}
+  .toprow{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>AI Clone Studio<span class="dot"> · </span>Content Planner</h1>
+  <div class="sub">Turn your persona into a batch of ready-to-shoot briefs — each one drops straight into the prompt builder.</div>
+</header>
+<div class="nav"><a href="prompt-builder.html">← Prompt Builder</a><a href="README.md">Playbook</a></div>
+
+<div class="wrap">
+  <div class="card">
+    <h2>Series setup</h2>
+    <div class="row">
+      <div>
+        <label>Your name / handle (for hooks)</label>
+        <input type="text" id="who" placeholder="me" />
+      </div>
+      <div>
+        <label>How many posts?</label>
+        <select id="count"><option>5</option><option>7</option><option>10</option><option>14</option></select>
+      </div>
+      <div>
+        <label>Platform vibe</label>
+        <select id="platform">
+          <option value="tiktok">TikTok / Reels (fast hooks)</option>
+          <option value="ig">Instagram (aspirational)</option>
+          <option value="yt">YouTube Shorts (story-led)</option>
+        </select>
+      </div>
+    </div>
+    <label>What do you talk about? (pick themes — briefs are built from these)</label>
+    <div class="chips" id="themes">
+      <span class="chip on" data-t="daily">day-in-the-life</span>
+      <span class="chip on" data-t="reflect">reflections / lessons</span>
+      <span class="chip" data-t="build">building / work</span>
+      <span class="chip" data-t="city">NYC moments</span>
+      <span class="chip" data-t="hot">hot takes / opinions</span>
+      <span class="chip" data-t="story">personal stories</span>
+      <span class="chip" data-t="tips">quick tips</span>
+      <span class="chip" data-t="behind">behind the scenes</span>
+    </div>
+    <div class="btnrow">
+      <button class="act" id="genBtn">Generate content plan →</button>
+      <button class="ghost" id="copyAll">Copy all briefs</button>
+    </div>
+    <div class="hint">Each brief gives you a hook, a specific NYC location, time-of-day, an action, and a spoken line. Copy one and paste the pieces into the prompt builder to render it.</div>
+  </div>
+
+  <div class="toprow" id="planHead" style="display:none">
+    <h2 style="margin:0;font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted)">Your plan</h2>
+  </div>
+  <div class="grid" id="plan"><div class="empty">Set your themes and hit <b>Generate content plan</b>.</div></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+document.querySelectorAll("#themes .chip").forEach(c=>c.onclick=()=>c.classList.toggle("on"));
+
+// pull persona name if the builder saved one
+try{const p=JSON.parse(localStorage.getItem("aiclone_persona")||"{}"); if(p.tag)$("who").placeholder=p.tag;}catch(e){}
+
+const LOCS=["a Williamsburg sidewalk past a bodega","the Lower East Side with neon storefronts","a Brooklyn brownstone stoop","a subway platform waiting for the train","inside an L train car","a Manhattan rooftop with water towers","a West Village cobblestone corner","DUMBO under the bridge","a busy Midtown crosswalk","a corner deli counter","a fire escape outside the apartment","Washington Square Park"];
+const TODS=["golden hour","harsh noon","early morning","blue hour","night / neon","overcast & rainy"];
+const ACTS=["walking and talking to camera","leaning on a wall mid-story","grabbing a coffee and turning to camera","sitting on the stoop","pointing something out across the street","walking down into the subway","crossing with the crowd","standing at the deli counter"];
+
+// theme -> {hooks[], lines[]}
+const T={
+ daily:{h:["A normal Tuesday in my life","POV: you live in New York","5AM vs 5PM, same day","What I actually do all day","Come with me, quick"],
+        l:["Okay so this is what a real day looks like.","No filter, just... this is it.","Honestly the best part of the day is the boring part."]},
+ reflect:{h:["Something I wish I knew at 25","The lesson that actually changed things","Nobody tells you this","One thing I stopped doing","Real talk for a second"],
+        l:["I used to think success was loud. It's quiet.","The thing that changed everything was so small.","Honestly? I just stopped apologizing for it."]},
+ build:{h:["Building this in public","What I'm working on right now","Day 1 vs now","The messy middle of building","Behind what I'm making"],
+        l:["This is way harder than it looks and I love it.","Progress isn't pretty but it's progress.","Okay quick update on what I'm building."]},
+ city:{h:["New York does this to you","Only in NYC","This city, man","A moment I caught today","Why I love it here"],
+        l:["The light down here right now is stupid good.","New York does this thing in the summer, I swear.","I almost didn't film this. Glad I did."]},
+ hot:{h:["Unpopular opinion","I'm gonna say it","Hot take incoming","This might make people mad","Let me be honest"],
+        l:["Everyone's doing this wrong and here's why.","I said what I said.","Disagree with me, that's fine."]},
+ story:{h:["Story time, quick","This actually happened","I've never told this","The time I almost quit","Let me tell you something"],
+        l:["So there I was, completely lost.","I still think about this all the time.","Okay this is kind of embarrassing but—"]},
+ tips:{h:["Steal this","One tip, huge difference","Do this today","The 30-second version","Save this one"],
+        l:["Try this once and thank me later.","It's simple but almost nobody does it.","Here's the fastest way I know."]},
+ behind:{h:["How this actually gets made","Behind the scenes","The part you don't see","How I really shoot this","Pulling back the curtain"],
+        l:["Everything you see is way less glamorous than it looks.","Here's how the sausage gets made.","This is the unedited version."]},
+};
+const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+// deterministic-ish variety without repeats
+function pick(arr,i){return arr[i%arr.length];}
+function shuffleSeed(arr,seed){const a=arr.slice();for(let i=a.length-1;i>0;i--){seed=(seed*9301+49297)%233280;const j=Math.floor(seed/233280*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function generate(){
+  const chosen=[...document.querySelectorAll("#themes .chip.on")].map(c=>c.dataset.t);
+  if(!chosen.length){$("plan").innerHTML='<div class="empty">Pick at least one theme.</div>';return;}
+  const n=parseInt($("count").value,10);
+  const who=($("who").value.trim()||$("who").placeholder||"me");
+  let seed=n*7+chosen.length*13;
+  const locs=shuffleSeed(LOCS,seed+1), tods=shuffleSeed(TODS,seed+2), acts=shuffleSeed(ACTS,seed+3);
+  let html="";
+  for(let i=0;i<n;i++){
+    const theme=chosen[i%chosen.length];
+    const data=T[theme];
+    const hook=pick(shuffleSeed(data.h,seed+i),i);
+    const line=pick(shuffleSeed(data.l,seed+i*2),i);
+    const loc=locs[i%locs.length], tod=tods[i%tods.length], act=acts[i%acts.length];
+    const themeName={daily:"Day-in-life",reflect:"Reflection",build:"Building",city:"NYC moment",hot:"Hot take",story:"Story",tips:"Quick tip",behind:"BTS"}[theme];
+    const brief=`HOOK: ${hook}\nTHEME: ${themeName}\nLOCATION: ${loc}\nTIME: ${tod}\nACTION: ${act}\nLINE: "${line}"`;
+    html+=`<div class="brief">
+      <button class="copy" data-b="${encodeURIComponent(brief)}">copy</button>
+      <div class="day">${DAYS[i]} · Post ${i+1}</div>
+      <h3>${hook}</h3>
+      <div class="meta"><b>${themeName}</b> · ${loc}</div>
+      <div class="meta">🕓 ${tod} &nbsp; 🎬 ${act}</div>
+      <div class="line">"${line}"</div>
+      <div class="tags">→ paste LOCATION / TIME / ACTION / LINE into the prompt builder</div>
+    </div>`;
+  }
+  $("plan").innerHTML=html;
+  $("planHead").style.display="flex";
+  document.querySelectorAll(".brief .copy").forEach(b=>b.onclick=()=>{
+    navigator.clipboard.writeText(decodeURIComponent(b.dataset.b)).then(()=>{
+      b.classList.add("done");b.textContent="copied ✓";setTimeout(()=>{b.classList.remove("done");b.textContent="copy";},1200);
+    });
+  });
+}
+$("genBtn").onclick=generate;
+$("copyAll").onclick=()=>{
+  const briefs=[...document.querySelectorAll(".brief .copy")].map(b=>decodeURIComponent(b.dataset.b));
+  if(!briefs.length)return;
+  navigator.clipboard.writeText(briefs.join("\n\n----\n\n")).then(()=>{
+    const t=$("copyAll").textContent;$("copyAll").textContent="Copied all ✓";setTimeout(()=>$("copyAll").textContent=t,1300);
+  });
+};
+</script>
+</body>
+</html>
