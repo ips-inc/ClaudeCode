@@ -11,6 +11,28 @@ every render carries taste and perception, not just likeness.
 
 ---
 
+## Shape & Silhouette (photographer's directive — bake into EVERY render)
+Isaac's note: the clone must never look **boxy** — a photographer creates *shape*. Frontal,
+square, arms-down stances read stiff and AI. Every render should sculpt a silhouette:
+- **Contrapposto** — weight on one leg, hips and shoulders on opposing angles.
+- **Body turned ¾** off the camera, not square to it; a slight lean or gesture.
+- **Break the vertical** — a hand in the pocket, an arm crossed, a turn of the wrist.
+- **Let the garment move** — Issey Miyake pleats *draping and flowing* to create line and motion.
+- **Negative space** around the figure so the silhouette reads; full-body when the fit matters.
+- **Gesture over pose** — mid-motion, caught, alive — never a stiff ID-photo stance.
+
+Prompt fragment:
+> dynamic contrapposto stance, weight on one leg, shoulders and hips on opposing angles, body turned three-quarters from camera, a hand in the pocket breaking the line, garment draping and flowing to create silhouette and movement, negative space, elegant elongated shape, caught mid-gesture, not stiff, not boxy, not frontal
+
+## Make the registers SHOW UP (bearing + styling, not just wardrobe)
+Isaac's note: the reference registers need to read *more*. Don't just dress the look —
+encode the **bearing** and the **styling philosophy** from `brand-reference.md`:
+- **Grounded / Franklin Saint** → "self-possessed composure, quiet authority, rooted, carries the room without effort."
+- **Bridge / Colman Domingo** → "black-dandy legacy tailoring, every piece a deliberate narrative choice, elegance with a story."
+- **Bridge / Solange** → "fine-art restraint, minimal, contemplative, power and vulnerability at once."
+- **Mythic / MJ–Prince–Beyoncé** → "iconographic, architected, unmistakable silhouette, monumental."
+Name the *bearing* in the prompt, not only the clothes — that's what makes taste read.
+
 ## The throughline (bake into EVERY render)
 Non-negotiables that ride under all three registers:
 - **Character-backed desirability** — dignity, composure, warmth. Attractiveness that's *earned*, never posed-thirsty.
