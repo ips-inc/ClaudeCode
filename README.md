@@ -64,7 +64,9 @@ Start small: nail **one** 8-second clip end to end before scaling to a content c
 
 ```
 README.md                          ← you are here
+QUICKSTART.md                      ← cloud-only path to your first talking-to-camera clip
 TOOLSTACK.md                       ← what to buy/use + what to upload (the full rig)
+docs/photo-generation.md           ← making photoreal stills of your clone (the foundation)
 persona/persona-template.md        ← blank identity spec to copy & fill
 persona/persona.md                 ← your filled-in clone (you create this)
 style/iphone-nyc-aesthetic.md      ← the "shot on iPhone in NYC" look bible
