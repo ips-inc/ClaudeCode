@@ -67,6 +67,7 @@ README.md                          ← you are here
 QUICKSTART.md                      ← cloud-only path to your first talking-to-camera clip
 TOOLSTACK.md                       ← what to buy/use + what to upload (the full rig)
 docs/photo-generation.md           ← making photoreal stills of your clone (the foundation)
+docs/train-lora-falai.md           ← click-by-click: train your face model on fal.ai
 docs/higgsfield.md                 ← Higgsfield CLI/MCP setup + full clone pipeline
 REFERENCES.md                      ← best-results spec for what/how to upload
 docs/recording-guide.md            ← how to record voice/video to sound real, not robotic
