@@ -67,6 +67,8 @@ README.md                          ← you are here
 QUICKSTART.md                      ← cloud-only path to your first talking-to-camera clip
 TOOLSTACK.md                       ← what to buy/use + what to upload (the full rig)
 docs/photo-generation.md           ← making photoreal stills of your clone (the foundation)
+docs/higgsfield.md                 ← Higgsfield CLI/MCP setup + full clone pipeline
+scripts/higgsfield-clone.sh        ← run locally: upload → train Soul ID → on-model still
 persona/persona-template.md        ← blank identity spec to copy & fill
 persona/persona.md                 ← your filled-in clone (you create this)
 style/iphone-nyc-aesthetic.md      ← the "shot on iPhone in NYC" look bible
