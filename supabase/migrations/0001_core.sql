@@ -117,7 +117,12 @@ create trigger projects_set_updated_at
   before update on projects
   for each row execute function set_updated_at();
 
--- RLS: admin (authenticated) full access, anon nothing.
+-- RLS: only the studio admin (by email) has access; anon gets nothing.
+create or replace function is_studio_admin() returns boolean
+language sql stable as $$
+  select coalesce(auth.jwt() ->> 'email', '') = 'isaac@isaacpoole.co'
+$$;
+
 alter table projects enable row level security;
 alter table folders enable row level security;
 alter table assets enable row level security;
@@ -126,13 +131,13 @@ alter table comments enable row level security;
 alter table favorites enable row level security;
 alter table activity enable row level security;
 
-create policy "admin full access" on projects    for all to authenticated using (true) with check (true);
-create policy "admin full access" on folders     for all to authenticated using (true) with check (true);
-create policy "admin full access" on assets      for all to authenticated using (true) with check (true);
-create policy "admin full access" on share_links for all to authenticated using (true) with check (true);
-create policy "admin full access" on comments    for all to authenticated using (true) with check (true);
-create policy "admin full access" on favorites   for all to authenticated using (true) with check (true);
-create policy "admin full access" on activity    for all to authenticated using (true) with check (true);
+create policy "admin full access" on projects    for all to authenticated using (is_studio_admin()) with check (is_studio_admin());
+create policy "admin full access" on folders     for all to authenticated using (is_studio_admin()) with check (is_studio_admin());
+create policy "admin full access" on assets      for all to authenticated using (is_studio_admin()) with check (is_studio_admin());
+create policy "admin full access" on share_links for all to authenticated using (is_studio_admin()) with check (is_studio_admin());
+create policy "admin full access" on comments    for all to authenticated using (is_studio_admin()) with check (is_studio_admin());
+create policy "admin full access" on favorites   for all to authenticated using (is_studio_admin()) with check (is_studio_admin());
+create policy "admin full access" on activity    for all to authenticated using (is_studio_admin()) with check (is_studio_admin());
 
 -- Storage: one private bucket for everything the admin uploads.
 insert into storage.buckets (id, name, public)
@@ -141,8 +146,8 @@ on conflict (id) do nothing;
 
 create policy "admin rw originals" on storage.objects
   for all to authenticated
-  using (bucket_id = 'originals')
-  with check (bucket_id = 'originals');
+  using (bucket_id = 'originals' and is_studio_admin())
+  with check (bucket_id = 'originals' and is_studio_admin());
 
 -- Atomic download counting that respects max_downloads.
 create or replace function increment_download(link_id uuid) returns boolean
