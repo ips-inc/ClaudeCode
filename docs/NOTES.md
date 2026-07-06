@@ -88,5 +88,22 @@ binary available via `pip install imageio-ffmpeg`) · python3.11 present.
 - **App-side transcript routes:** `/api/assets/[id]/transcript` (JSON segments / `?format=srt|vtt`
   sidecar redirect) and `/api/projects/[id]/transcript-search` (websearch FTS over segments with
   timecodes). Both behind explicit authz, no existence oracle.
-- **Next:** M5 realtime frame-accurate review, M6 delivery + audit surfacing, then deploy checklist
+## 2026-07-06 (later) — M5 realtime frame-accurate review
+
+- **Comment schema already had `frame`+`fps`+`author_id`** with full RLS (select/insert/update/
+  delete policies). Enabled realtime: `alter publication supabase_realtime add table comments` +
+  `replica identity full` (migration 0005, applied live — verified: publication now lists comments,
+  replica identity = f).
+- **Comment API:** `POST/GET /api/assets/[id]/comments` (frame-pinned create, authorized, audited),
+  `PATCH/DELETE /api/comments/[id]` (resolve = owner/collaborator; delete = author or owner).
+- **`src/lib/frames.ts`** — frame-accurate math. Key fix: `frameToTime` nudges +0.25 frame (not
+  +0.5, which lands on the round() boundary and bumps to the next frame). Round-trips for
+  23.976/24/25/29.97/30/60 fps. **6/6 unit tests green.**
+- **`FrameReview.tsx`** — proxy player, ◄►frame-step, SMPTE readout, timeline markers, live comment
+  sync via Supabase Realtime channel (RLS-filtered so only members get events), optimistic echo
+  deduped by id, resolve/reply threads.
+- **Verified:** frame math (unit), realtime publication + replica identity (live SQL), routes
+  (typecheck + build register all three). Two-browser live delivery needs the deployed app.
+
+- **Next:** M6 client delivery gallery + audit-log surfacing, then deploy checklist
   (Vercel + Railway + R2/MinIO + key rotation).
