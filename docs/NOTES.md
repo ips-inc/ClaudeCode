@@ -56,11 +56,20 @@ Verified offline (no live infra needed):
 
 Run all TS tests: `npm test`.
 
-**Sandbox limits hit:** Docker registry is blocked by egress policy (can't run local MinIO), and
-there's no ffmpeg here. So the remaining M2 pieces — the IDOR-proof `/api/media` access route, the
-multipart upload routes, and audit writes — are buildable and typecheck-clean, but their end-to-end
-byte round-trip can only be RUNTIME-verified against a real bucket. To close that I need (owner):
-1. `SUPABASE_SERVICE_ROLE_KEY` for studio-media-cloud (dashboard → Project Settings → API keys).
-2. Storage backend choice + creds: Cloudflare R2 (recommended) or self-hosted MinIO — S3 endpoint,
-   bucket, access key/secret. Either is a drop-in via the S3_* env vars.
-Until then the authz decisions themselves ARE already verified (RLS isolation + share gating tests).
+**M2 complete (2026-07-06).** Remaining pieces built AND runtime-verified:
+- `/api/upload/{start,part,complete}` — resumable multipart (any size), write-access verified on
+  every call, real type re-sniffed from object bytes at completion, jobs auto-queued for AV media.
+- `/api/media/[assetId]` — the single authenticated door to bytes: explicit authz per request, no
+  existence oracle (foreign ID and missing ID both 404), renditions via `?r=`, audited downloads.
+- **Byte round-trip proven** via `tests/s3-roundtrip.test.ts` against moto (local S3 on :5001 —
+  same S3 API as prod): PUT→GET bytes equal, multipart assembles in order, attachment disposition
+  honored. SigV4-tamper rejection auto-skips on moto (doesn't validate signatures) and asserts on
+  R2/MinIO. Suite: `npm test` → 12 pass, 1 honest skip.
+- Full E2E through the Next routes still happens at deploy: sandbox egress blocks `*.supabase.co`
+  (403 policy, do-not-retry), so the app can't reach the live DB from here. Owner's
+  `SUPABASE_SERVICE_ROLE_KEY` is in `.env.local` (gitignored). ⚠ Key was pasted in chat once —
+  rotate at deploy.
+- Sandbox: Docker registry blocked (no MinIO container; dockerd itself runs) → moto instead.
+
+**Env facts (this sandbox):** pypi.org allowlisted (pip works) · registry.npmjs.org allowlisted ·
+`*.supabase.co` and Docker Hub blocked by egress policy · no ffmpeg binary · python3.11 present.
