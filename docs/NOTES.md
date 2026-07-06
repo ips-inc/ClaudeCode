@@ -43,4 +43,24 @@ Short, append-only log across sessions. Newest first.
   drafts hidden from clients, outsider + anon see nothing, owner sees all. Security advisor: **0 lints.**
 - Env now points at the dedicated project. Still need at M2: R2 (or MinIO) S3 credentials +
   `SUPABASE_SERVICE_ROLE_KEY` (dashboard, owner-only).
-- **Next: M2** — S3 media store + IDOR-proof presigned access routes + share hardening + audit writes.
+### M2 — Storage & share hardening (in progress, 2026-07-06)
+
+Verified offline (no live infra needed):
+- `src/lib/s3.ts` — S3-compatible client (R2 / MinIO / S3) with presigned GET/PUT + resumable
+  multipart. Presign correctness proven in `tests/s3-presign.test.ts` (bucket/key/host, SigV4
+  signature, TTL, forced attachment disposition, filename sanitization) — 4/4.
+- `src/lib/filetype.ts` — magic-byte sniffing; never trusts client Content-Type; neutralizes
+  dangerous inline types. `tests/filetype.test.ts` — 5/5.
+- `0003_share_functions.sql` — atomic service-role-only download/view gates (revoke/expiry/limit).
+  `supabase/tests/share_links.sql` — 9/9.
+
+Run all TS tests: `npm test`.
+
+**Sandbox limits hit:** Docker registry is blocked by egress policy (can't run local MinIO), and
+there's no ffmpeg here. So the remaining M2 pieces — the IDOR-proof `/api/media` access route, the
+multipart upload routes, and audit writes — are buildable and typecheck-clean, but their end-to-end
+byte round-trip can only be RUNTIME-verified against a real bucket. To close that I need (owner):
+1. `SUPABASE_SERVICE_ROLE_KEY` for studio-media-cloud (dashboard → Project Settings → API keys).
+2. Storage backend choice + creds: Cloudflare R2 (recommended) or self-hosted MinIO — S3 endpoint,
+   bucket, access key/secret. Either is a drop-in via the S3_* env vars.
+Until then the authz decisions themselves ARE already verified (RLS isolation + share gating tests).
