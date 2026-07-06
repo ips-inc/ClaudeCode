@@ -18,3 +18,11 @@ Short, append-only log across sessions. Newest first.
   with email-scoped RLS. When the dedicated project exists, migrate the reused pieces there.
 - **Lesson:** the Supabase MCP has no org-plan-upgrade tool; Pro upgrade is a dashboard action the
   owner must take. Don't assume tooling can change billing tier.
+- **New requirement:** any file type / any size / any quality + a **10–30 TB archive**. Decided media
+  store = **Cloudflare R2** (S3-compatible, ~$0.015/GB-mo, **$0 egress**, no per-file cap, branded
+  `media.<domain>` origin). Supabase Storage rejected for media (egress $0.09/GB kills it at scale).
+  Supabase now = Postgres/Auth/Realtime/RLS only. Cold-tier to B2/Glacier later via lifecycle rule.
+- **Consequence:** with media on R2, the Supabase Pro upgrade is about a clean dedicated project, not
+  storage limits. Owner chose to upgrade org to Pro; on completion → create dedicated project → M1.
+- **Status: blocked on owner's Supabase Pro upgrade before creating the dedicated project + M1.**
+  Will also need R2 credentials (account id, access key/secret, bucket) at M2.

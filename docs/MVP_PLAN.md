@@ -14,9 +14,26 @@ Status: **PLAN — awaiting go-ahead to start Milestone 1.** No feature code wri
 2. **Database:** dedicated Supabase project (not co-tenanted). Blocked on a free slot — see
    "Open decision" below.
 3. **Workers:** recommendation below (owner asked to be advised).
-4. **Media origin:** branded delivery. Private buckets + short-lived signed URLs now; served under
-   the owner's own domain (branded media subdomain) when DNS is wired. Branding of the delivery
-   *experience* is already on-brand and continues in the UI phase.
+4. **Media origin:** branded delivery. Private object store + short-lived presigned URLs, served
+   under the owner's own domain (`media.<domain>`). Branding of the delivery *experience* is
+   already on-brand and continues in the UI phase.
+5. **Storage split (added 2026-07-06):** support **any file type, any size, any quality**, plus a
+   **10–30 TB archive**. Media does NOT live in Supabase Storage (egress $0.09/GB makes it
+   non-viable at scale). See "Storage architecture" below.
+
+## Storage architecture
+
+- **Supabase** = Postgres + Auth + Realtime + RLS only (metadata + security brain). No large media.
+- **Cloudflare R2** = primary media store (originals + renditions + proxies). S3-compatible; ~$0.015/GB/mo
+  and **$0 egress** — decisive when shipping multi-GB masters. Custom domain `media.<domain>` behind
+  Cloudflare CDN doubles as the branded, isolated media origin; presigned URLs keep it private.
+- **Any size:** direct **multipart resumable uploads** to R2 (100GB+ ProRes/R3D/ARRIRAW resume fine).
+  R2 has no practical per-file cap (Supabase Storage does, even on Pro).
+- **Any type:** originals stored untouched and downloadable at full quality; proxies generated only
+  for video/audio/image; non-media stored/delivered as-is. Magic-byte sniff for safety, all types allowed.
+- **Cost at scale (storage/mo):** R2 ~$154 / $307 / $460 for 10/20/30 TB, $0 egress. Cheaper cold
+  tiers later via lifecycle rule → Backblaze B2 (~$6/TB) or S3 Glacier Deep Archive (~$1/TB), no app change.
+- Reused pieces currently on Supabase Storage (Poole Studio) migrate to R2 as part of M2.
 
 ## What already exists and is reused
 
@@ -65,11 +82,12 @@ New / changed tables (RLS on every one, keyed off `memberships`):
 - **M1 — Multi-tenant security spine.** profiles/clients/memberships + RLS rewritten on every
   table. Isolation tests green: client A cannot read or GET client B's rows/files; a request with
   no/foreign creds returns zero rows. *(First, because isolation is the headline requirement.)*
-- **M2 — Storage & share hardening.** Private buckets; every object fetch goes through a server
-  route that runs an authz check then mints a short-lived signed URL (no reliance on unguessable
-  IDs — IDOR-proof). Server-side magic-byte file-type validation, size caps, upload scan hook.
-  Audit log written on access/download. Share-link tests: valid works, revoked returns nothing,
-  expired returns nothing, wrong password denied.
+- **M2 — Storage & share hardening.** Stand up **Cloudflare R2** as the media store (multipart
+  resumable uploads; migrate existing Supabase-Storage objects over). Every object fetch goes
+  through a server route that runs an authz check then mints a short-lived **presigned R2 URL** (no
+  reliance on unguessable IDs — IDOR-proof). Server-side magic-byte file-type validation, upload
+  scan hook. Audit log written on access/download. Share-link tests: valid works, revoked returns
+  nothing, expired returns nothing, wrong password denied.
 - **M3 — Video pipeline.** Worker skeleton + FFmpeg. Transcode to 1080p/720p + a scrubbing proxy +
   poster. Player selects the proxy for smooth scrubbing; downloads offered per rendition + original.
 - **M4 — Transcription.** faster-whisper in the worker. Searchable segments, word timestamps,
