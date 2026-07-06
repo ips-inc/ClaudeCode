@@ -72,4 +72,21 @@ Run all TS tests: `npm test`.
 - Sandbox: Docker registry blocked (no MinIO container; dockerd itself runs) → moto instead.
 
 **Env facts (this sandbox):** pypi.org allowlisted (pip works) · registry.npmjs.org allowlisted ·
-`*.supabase.co` and Docker Hub blocked by egress policy · no ffmpeg binary · python3.11 present.
+`*.supabase.co`, huggingface.co and Docker Hub blocked by egress policy · no system ffmpeg (static
+binary available via `pip install imageio-ffmpeg`) · python3.11 present.
+
+## 2026-07-06 (later) — M3 + M4
+
+- **Worker built (`worker/`):** Python package + Dockerfile (python:3.11-slim + apt ffmpeg +
+  faster-whisper). Atomic job claim via `app.claim_job` (SKIP LOCKED, service-role only; applied to
+  live DB with `requeue_stale_jobs` for crash recovery). Renditions: proxy 540p (faststart + dense
+  keyframes for scrubbing), 720p, 1080p (never upscales), poster, thumb; audio-only → AAC proxy.
+  Transcription: faster-whisper, word timestamps, VAD, SRT/VTT sidecars, segments batched to DB.
+- **Verified with REAL ffmpeg** (imageio-ffmpeg static binary): worker tests 6/6 — probe, full
+  ladder, no-upscale rule, faststart moov present, 16kHz ASR extraction. Whisper *model inference*
+  not runnable here (huggingface.co blocked) — verify on deployed worker; faster-whisper imports OK.
+- **App-side transcript routes:** `/api/assets/[id]/transcript` (JSON segments / `?format=srt|vtt`
+  sidecar redirect) and `/api/projects/[id]/transcript-search` (websearch FTS over segments with
+  timecodes). Both behind explicit authz, no existence oracle.
+- **Next:** M5 realtime frame-accurate review, M6 delivery + audit surfacing, then deploy checklist
+  (Vercel + Railway + R2/MinIO + key rotation).
