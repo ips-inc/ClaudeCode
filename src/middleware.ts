@@ -47,5 +47,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/studio/:path*", "/studio"],
+  matcher: ["/studio/:path*", "/studio", "/deliver/:path*", "/deliver"],
 };

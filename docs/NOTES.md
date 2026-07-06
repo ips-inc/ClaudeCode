@@ -105,5 +105,28 @@ binary available via `pip install imageio-ffmpeg`) · python3.11 present.
 - **Verified:** frame math (unit), realtime publication + replica identity (live SQL), routes
   (typecheck + build register all three). Two-browser live delivery needs the deployed app.
 
-- **Next:** M6 client delivery gallery + audit-log surfacing, then deploy checklist
-  (Vercel + Railway + R2/MinIO + key rotation).
+## 2026-07-06 (later) — M6 client delivery + audit, and the REAL isolation tests
+
+- **Client delivery (authenticated multi-tenant path — the acceptance-criteria path):**
+  `/deliver` (projects visible to the actor) + `/deliver/[projectId]` (gallery). Thumbnails and
+  downloads both flow through `/api/media` → authz re-checked per request + every download audited.
+  Owners see the per-project **access log (proof of delivery)** inline; clients never do.
+  `GET /api/projects/[id]/audit` (owner/collab only) + `src/lib/deliveries.ts` (isolation in the
+  data layer as defense-in-depth on top of RLS).
+- **Correction to the M1 record:** M1 was checkpointed "isolation green" from interactive checks,
+  but no re-runnable test was committed. Fixed now — two deterministic SQL suites, **run live and
+  green**, that create fixtures → assert → roll back via sentinel (no residue):
+  - `supabase/tests/isolation_test.sql` — **13/13**: client A sees only its own PUBLISHED project
+    (draft hidden; client B's project AND asset both denied by id = IDOR-proof); client is
+    read-only (insert denied); client B symmetric; anon sees 0 projects/assets/clients; owner sees
+    all.
+  - `supabase/tests/share_link_test.sql` — **8/8**: valid link consumes download + view; revoked,
+    expired, downloads-disabled, and at-cap links all denied for both download and view.
+  - `supabase/tests/run.sh` runs both via `DATABASE_URL` (psql) for CI/local. (Sandbox shell can't
+    reach supabase — these were executed live through the Supabase SQL tool.)
+- **Legacy note:** `/studio/**` and `/s/[slug]/**` are the superseded single-tenant Poole-Studio
+  pages; they compile but reference old columns (storage_path) and are NOT the media-cloud delivery
+  path. Reconcile-or-remove in a later cleanup; the canonical delivery is `/deliver/**`.
+- **Status: all six milestones code-complete and verified to the extent the sandbox allows.**
+  Remaining before real use = deploy: Vercel (app) + Railway (worker) + R2/MinIO creds + rotate the
+  service key that was pasted in chat + create client users. See docs/DEPLOY.md.
