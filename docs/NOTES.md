@@ -24,5 +24,23 @@ Short, append-only log across sessions. Newest first.
   Supabase now = Postgres/Auth/Realtime/RLS only. Cold-tier to B2/Glacier later via lifecycle rule.
 - **Consequence:** with media on R2, the Supabase Pro upgrade is about a clean dedicated project, not
   storage limits. Owner chose to upgrade org to Pro; on completion → create dedicated project → M1.
-- **Status: blocked on owner's Supabase Pro upgrade before creating the dedicated project + M1.**
-  Will also need R2 credentials (account id, access key/secret, bucket) at M2.
+- Owner upgraded org to **Pro**. Created dedicated project **studio-media-cloud**
+  (ref `lnclobwmfkxtibqnxgip`, us-east-1). Media cloud lives here; legacy Poole Studio SQL moved to
+  `supabase/legacy-poole-studio/`.
+
+### M1 — Multi-tenant security spine ✅ (2026-07-06)
+
+- Schema `supabase/migrations/0001_security_spine.sql`: profiles/clients/memberships + content,
+  media, transcript, share, audit, jobs tables. RLS on **every** table (default deny), driven by
+  `app.*` SECURITY DEFINER helpers (is_owner / has_client_access / has_project_access). anon = no
+  rows. Client-role users only see `published` projects.
+- `0002_app_schema_grants.sql`: grant usage/execute on schema `app` to anon/authenticated (without
+  it, every policy check errors "permission denied for schema app").
+- **Bugs caught by the test, fixed:** (1) new-user trigger returned text where `user_role` enum
+  expected — cast added, else all signups would fail; (2) `touch_updated_at` mutable search_path —
+  pinned.
+- **Isolation test** `supabase/tests/isolation.sql`: 13/13 assertions pass — A/B fully isolated,
+  drafts hidden from clients, outsider + anon see nothing, owner sees all. Security advisor: **0 lints.**
+- Env now points at the dedicated project. Still need at M2: R2 (or MinIO) S3 credentials +
+  `SUPABASE_SERVICE_ROLE_KEY` (dashboard, owner-only).
+- **Next: M2** — S3 media store + IDOR-proof presigned access routes + share hardening + audit writes.
