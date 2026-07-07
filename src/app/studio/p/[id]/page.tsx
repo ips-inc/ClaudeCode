@@ -33,7 +33,7 @@ export default async function ProjectDetail({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ folder?: string; tag?: string }>;
+  searchParams: Promise<{ folder?: string; tag?: string; q?: string; sort?: string }>;
 }) {
   const actor = await getActor();
   if (!actor || actor.role === "client") redirect("/studio");
@@ -70,10 +70,31 @@ export default async function ProjectDetail({
     assetTagsMap(allAssets.map((a) => a.id)),
   ]);
   const activeTagId = sp.tag ?? null;
-  const assets = activeTagId
+  const query = (sp.q ?? "").trim().toLowerCase();
+  const sort = sp.sort ?? "newest";
+
+  let assets = activeTagId
     ? allAssets.filter((a) => (tagsByAsset.get(a.id) ?? []).some((t) => t.id === activeTagId))
     : allAssets;
+  if (query) assets = assets.filter((a) => a.filename.toLowerCase().includes(query));
+  assets = [...assets].sort((a, b) => {
+    switch (sort) {
+      case "oldest":
+        return +new Date(a.created_at) - +new Date(b.created_at);
+      case "name":
+        return a.filename.localeCompare(b.filename);
+      case "size":
+        return (b.size_bytes ?? 0) - (a.size_bytes ?? 0);
+      default: // newest
+        return +new Date(b.created_at) - +new Date(a.created_at);
+    }
+  });
   const activeTag = activeTagId ? vocabulary.find((t) => t.id === activeTagId) ?? null : null;
+
+  // Preserve folder scope + active tag when submitting the search/sort form.
+  const hiddenScope: { name: string; value: string }[] = [];
+  if (currentFolder) hiddenScope.push({ name: "folder", value: currentFolder });
+  if (activeTagId) hiddenScope.push({ name: "tag", value: activeTagId });
 
   const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const activeLinks = (links ?? []).filter((l) => !l.revoked_at);
@@ -151,8 +172,29 @@ export default async function ProjectDetail({
 
         {/* Assets */}
         <section className="mt-10">
+          <form method="get" action={`/studio/p/${id}`} className="mb-3 flex flex-wrap items-center gap-2">
+            {hiddenScope.map((h) => (
+              <input key={h.name} type="hidden" name={h.name} value={h.value} />
+            ))}
+            <input
+              name="q"
+              defaultValue={sp.q ?? ""}
+              placeholder="Search files…"
+              className="field !h-9 w-full max-w-56 text-[13px]"
+            />
+            <select name="sort" defaultValue={sort} className="field !h-9 w-auto text-[13px]">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="name">Name (A–Z)</option>
+              <option value="size">Largest first</option>
+            </select>
+            <button className="btn btn-ghost btn-sm">Apply</button>
+            {(query || sort !== "newest") && (
+              <Link href={`/studio/p/${id}${currentFolder ? `?folder=${currentFolder}` : ""}`} className="kicker hover:[color:var(--color-ink)]">Reset</Link>
+            )}
+          </form>
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <h2 className="kicker">Files · {assets.length}{activeTag ? ` of ${allAssets.length}` : ""}</h2>
+            <h2 className="kicker">Files · {assets.length}{activeTag || query ? ` of ${allAssets.length}` : ""}</h2>
             {vocabulary.length > 0 && (
               <div className="flex flex-wrap items-center gap-1">
                 {vocabulary.map((t) => {
@@ -174,7 +216,7 @@ export default async function ProjectDetail({
           </div>
           {assets.length === 0 ? (
             <p className="text-[13px] [color:var(--color-mute)]">
-              {activeTag ? "No files with this tag." : "Nothing uploaded yet."}
+              {query ? "No files match your search." : activeTag ? "No files with this tag." : "Nothing uploaded yet."}
             </p>
           ) : (
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
