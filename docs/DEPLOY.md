@@ -48,12 +48,16 @@ MinIO instead? Same env vars — point `S3_ENDPOINT` at your MinIO URL. See the 
 
 ## 4. Auth + users
 
-1. Supabase → Authentication → Providers: turn OFF public signups (invite-only).
-2. Your account (`isaac@isaacpoole.co`) exists — set its profile `global_role = 'owner'`:
-   `update profiles set global_role='owner' where email='isaac@isaacpoole.co';`
-   (If no profile row exists yet, sign in once so the trigger creates it, then run the update.)
-3. Add a client: create a `clients` row; invite the client's email (Auth → Users → Invite); once
-   they have a profile, add a `memberships` row (their user_id ↔ client_id, role `client`).
+1. **Sign in first — you become the owner automatically.** The `handle_new_user` trigger creates a
+   `profiles` row on signup and makes the **first** account the owner (every later signup is a
+   client). So just sign in once at `/studio/login` with `isaac@isaacpoole.co` and you're the owner.
+   No SQL needed. (To promote someone later: `update profiles set global_role=... where email=...`.)
+2. Supabase → Authentication → Providers: after your first sign-in, turn OFF public signups so it's
+   invite-only.
+3. Add a client from `/studio` ("Add a client"). To give a client portal access: invite their email
+   (Auth → Users → Invite) — they auto-get a client profile — then add a `memberships` row
+   (their user_id ↔ client_id, role `client`). Or just send them a public `/s/…` share link, which
+   needs no account at all.
 
 ## 5. Verify against acceptance criteria
 

@@ -150,3 +150,23 @@ columns). Replaced with the multi-tenant surface so the whole system operates en
   SQL check of the exact share embed + view + download-consume path (rolled back). The two security
   suites (isolation 13/13, share 8/8) still pass.
 - **Build is functionally complete.** Only deploy wiring remains (docs/DEPLOY.md).
+
+## 2026-07-06 (later) — "finish the build" round 2: operational readiness
+
+Closed the two things between "code-complete" and "actually usable":
+- **Owner bootstrap (was a lockout risk):** the app 404s anyone without a `profiles` row. Added
+  migration `0006_profile_bootstrap.sql` — a `handle_new_user` trigger that creates a profile on
+  signup and makes the **first** account the owner (everyone after = client), plus a backfill for
+  existing users. **Applied live and verified** (rolled back): with no owner, user 1 → owner,
+  user 2 → client. Confirms the live project has no owner yet, so Isaac becomes owner automatically
+  on first sign-in — zero manual SQL. DEPLOY.md step 4 simplified accordingly.
+- **Worker full-loop E2E (biggest previously-unproven integration):** `worker/tests/test_pipeline_e2e.py`
+  uploads a real source video to moto S3, stubs only the PostgREST layer, and runs the actual
+  `main.run_one()` → claim → download → ffmpeg ladder → upload all 5 renditions back (verified via
+  head_object) → record metadata → finish. **Ran green** with real ffmpeg. (Skips gracefully when
+  no S3 test server.)
+- **Fixed a real test-isolation bug:** `config.py` validated Supabase/S3 env at *import*, so pure
+  ffmpeg/text tests couldn't import without DB creds. Now reads lazily; `config.validate()` fails
+  fast in `main()` instead. Worker media/subtitles: 6/6 without any DB env.
+- Sandbox quirk: backgrounding moto sometimes kills the shell (signal 16) and Postgres won't run
+  here — doesn't affect the code; the e2e proof stands from a clean run.

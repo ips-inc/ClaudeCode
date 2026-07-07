@@ -41,6 +41,12 @@ python -m studio_worker.main
 cd worker && python3 -m unittest discover -s tests -v
 ```
 
-`test_media.py` generates a synthetic clip and runs the REAL rendition ladder
-(any ffmpeg works: `FFMPEG_BIN=/path/to/ffmpeg`). `test_subtitles.py` covers
-SRT/VTT formatting. Verified in CI-like sandbox: 6/6 pass.
+- `test_media.py` — real rendition ladder on a synthetic clip (`FFMPEG_BIN=/path/to/ffmpeg`).
+- `test_subtitles.py` — SRT/VTT formatting.
+- `test_pipeline_e2e.py` — **full transcode job loop end to end**: uploads a source video to an
+  S3-compatible server (moto at `S3_TEST_ENDPOINT`, default `:5001`), stubs only the PostgREST db
+  layer, then runs the real `main.run_one()` → claim → download → ffmpeg ladder → upload every
+  rendition back to storage (verified via `head_object`) → record metadata + finish job.
+
+Verified in sandbox: **7/7 pass** with a real ffmpeg + moto (Whisper inference needs network for
+the model, so it's exercised on the deployed worker).

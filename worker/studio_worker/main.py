@@ -125,6 +125,7 @@ def run_one(kinds: list[str] | None = None) -> bool:
 
 
 def main() -> None:
+    config.validate()  # fail fast on missing credentials
     print(
         f"[worker] up — model={config.WHISPER_MODEL}/{config.WHISPER_COMPUTE} "
         f"bucket={config.S3_BUCKET} poll={config.POLL_SECONDS}s"
