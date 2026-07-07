@@ -6,3 +6,7 @@ out/
 .env*.local
 *.tsbuildinfo
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc
