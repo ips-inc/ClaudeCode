@@ -1,9 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
-import { cleanEnv } from "@/lib/env";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/env";
 
 export function supabaseBrowser() {
-  return createBrowserClient(
-    cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL),
-    cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  );
+  return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }

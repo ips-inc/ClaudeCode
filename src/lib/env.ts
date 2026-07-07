@@ -1,11 +1,37 @@
 /**
- * Read an env var and strip anything that can't legally sit in an HTTP header —
- * invisible characters (zero-width spaces, BOMs), smart quotes, and surrounding
- * whitespace/newlines. Pasting keys into dashboards frequently introduces these,
- * and the browser's fetch() rejects any header value with a code point > 255
- * ("String contains non ISO-8859-1 code point"). Supabase keys and URLs are pure
- * ASCII, so removing non-printable-ASCII is always safe.
+ * Env hygiene for the public Supabase config.
+ *
+ * Pasting keys into hosting dashboards frequently injects invisible characters
+ * (zero-width spaces, BOMs) or truncates them, which breaks auth in ways that
+ * are miserable to diagnose ("String contains non ISO-8859-1 code point",
+ * "Invalid API key"). The Supabase URL and anon/publishable key are PUBLIC —
+ * they're shipped in the browser bundle regardless — so we keep known-good
+ * defaults and only trust the env var when it's actually well-formed.
  */
+
+/** Strip anything that can't sit in an HTTP header, plus surrounding whitespace. */
 export function cleanEnv(value: string | undefined | null): string {
   return (value ?? "").replace(/[^\x20-\x7E]/g, "").trim();
 }
+
+const DEFAULT_URL = "https://lnclobwmfkxtibqnxgip.supabase.co";
+const DEFAULT_ANON = "sb_publishable_JT4aqDprmaITkk5hgxinTw_u7sZaMy9";
+
+function looksLikeUrl(v: string): boolean {
+  return /^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(v);
+}
+
+function looksLikeKey(v: string): boolean {
+  // legacy anon JWT (three base64url segments) or modern publishable key
+  return /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(v) || /^sb_(publishable|anon)_[\w-]+$/.test(v);
+}
+
+export const SUPABASE_URL = (() => {
+  const v = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  return looksLikeUrl(v) ? v : DEFAULT_URL;
+})();
+
+export const SUPABASE_ANON_KEY = (() => {
+  const v = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  return looksLikeKey(v) ? v : DEFAULT_ANON;
+})();
