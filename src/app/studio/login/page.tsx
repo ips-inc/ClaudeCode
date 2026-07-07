@@ -19,7 +19,12 @@ function LoginForm() {
     setError(null);
     const { error } = await supabaseBrowser().auth.signInWithPassword({ email, password });
     if (error) {
-      setError(error.message);
+      // Surface real detail — status + name + message — so failures are legible.
+      const e = error as { message?: string; name?: string; status?: number };
+      const detail =
+        [e.name, e.status ? `(${e.status})` : "", e.message].filter(Boolean).join(" ").trim();
+      setError(detail || "Sign-in failed — check your connection and try again.");
+      console.error("[login] sign-in error:", error);
       setBusy(false);
       return;
     }
