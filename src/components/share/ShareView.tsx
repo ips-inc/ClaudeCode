@@ -43,56 +43,56 @@ export function ShareView({
   return (
     <>
       {hasFolders && (
-        <nav className="mb-4 flex flex-wrap items-center gap-1 text-sm">
-          <a href={folderHref()} className="text-neutral-500 hover:text-neutral-900">Home</a>
+        <nav className="mb-5 flex flex-wrap items-center gap-1 text-[13px]">
+          <a href={folderHref()} className="[color:var(--color-dim)] hover:[color:var(--color-ink)]">Home</a>
           {crumbs.map((c) => (
             <span key={c.id}>
-              <span className="text-neutral-300"> / </span>
-              <a href={folderHref(c.id)} className="text-neutral-500 hover:text-neutral-900">{c.name}</a>
+              <span className="[color:var(--color-faint)]"> / </span>
+              <a href={folderHref(c.id)} className="[color:var(--color-dim)] hover:[color:var(--color-ink)]">{c.name}</a>
             </span>
           ))}
         </nav>
       )}
 
       {subfolders.length > 0 && (
-        <ul className="mb-4 flex flex-wrap gap-2">
+        <ul className="mb-5 flex flex-wrap gap-2">
           {subfolders.map((f) => (
             <li key={f.id}>
-              <a href={folderHref(f.id)} className="inline-block rounded-md border bg-white px-3 py-2 text-sm hover:shadow-sm">📁 {f.name}</a>
+              <a href={folderHref(f.id)} className="card lift inline-block px-3.5 py-2.5 text-[13px]">📁 {f.name}</a>
             </li>
           ))}
         </ul>
       )}
 
       {assets.length === 0 && !hasFolders ? (
-        <p className="text-center text-sm text-neutral-400">Files are being prepared.</p>
+        <p className="text-center text-[14px] [color:var(--color-mute)]">Files are being prepared.</p>
       ) : assets.length === 0 ? (
-        <p className="text-sm text-neutral-400">This folder is empty.</p>
+        <p className="text-[13px] [color:var(--color-mute)]">This folder is empty.</p>
       ) : (
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {assets.map((a) => (
-          <li key={a.id} className="overflow-hidden rounded-lg border">
+          <li key={a.id} className="card lift group overflow-hidden">
             <button
               onClick={() => (a.mime.startsWith("image/") || a.mime.startsWith("video/")) && setLightbox(a)}
-              className="relative flex aspect-square w-full items-center justify-center bg-neutral-100"
+              className="relative flex aspect-square w-full items-center justify-center bg-[color:var(--color-surface-2)]"
             >
               {a.thumbKind ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={fileUrl(a, `?r=${a.thumbKind}`)} alt={a.filename} className="h-full w-full object-cover" />
               ) : (
-                <span className="px-2 text-[11px] uppercase tracking-wider text-neutral-400">{a.mime.split("/")[1] ?? "file"}</span>
+                <span className="kicker px-2 text-center">{a.mime.split("/")[1] ?? "file"}</span>
               )}
               {a.mime.startsWith("video/") && (
-                <span className="absolute inset-0 flex items-center justify-center"><span className="rounded-full bg-black/50 px-3 py-1.5 text-white">▶</span></span>
+                <span className="absolute inset-0 flex items-center justify-center"><span className="rounded-full bg-black/45 px-3.5 py-2 text-white backdrop-blur">▶</span></span>
               )}
             </button>
-            <div className="flex items-center justify-between gap-2 p-2">
+            <div className="flex items-center justify-between gap-2 p-2.5">
               <div className="min-w-0">
-                <p className="truncate text-xs font-medium" title={a.filename}>{a.filename}</p>
-                <p className="text-[11px] text-neutral-400">{fmt(a.size_bytes)}</p>
+                <p className="truncate text-[12.5px] font-medium" title={a.filename}>{a.filename}</p>
+                <p className="mono text-[10.5px] [color:var(--color-mute)]">{fmt(a.size_bytes)}</p>
               </div>
               {allowDownloads && (
-                <a href={fileUrl(a, "?dl=1")} className="shrink-0 rounded border px-2 py-1 text-[11px] hover:bg-neutral-900 hover:text-white">↓</a>
+                <a href={fileUrl(a, "?dl=1")} className="btn btn-ghost btn-xs shrink-0">↓</a>
               )}
             </div>
           </li>

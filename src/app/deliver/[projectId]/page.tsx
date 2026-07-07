@@ -32,33 +32,33 @@ export default async function DeliveryPage({
   const isOwnerSide = actor.role !== "client";
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <Link href="/deliver" className="text-xs uppercase tracking-widest text-neutral-400 hover:text-neutral-600">
-            ← Deliveries
-          </Link>
-          <h1 className="mt-2 text-2xl font-medium">{project.title}</h1>
+    <div className="surface-light min-h-screen">
+      <header className="glass sticky top-0 z-20 border-b hairline">
+        <div className="mx-auto max-w-6xl px-6 py-4">
+          <Link href="/deliver" className="kicker hover:[color:var(--color-ink)]">← Deliveries</Link>
+        </div>
+      </header>
+      <main className="mx-auto max-w-6xl px-6 py-12">
+        <div className="mb-10 text-center">
+          <h1 className="display text-4xl sm:text-5xl">{project.title}</h1>
           {project.description && (
-            <p className="mt-1 max-w-2xl text-sm text-neutral-500">{project.description}</p>
+            <p className="mx-auto mt-3 max-w-xl text-[14px] [color:var(--color-dim)]">{project.description}</p>
           )}
-          <p className="mt-1 text-xs text-neutral-400">
+          <p className="kicker mt-3">
             {(project.clients as { name?: string } | null)?.name}
-            {isOwnerSide && !project.published && " · not yet published to client"}
+            {isOwnerSide && !project.published && " · not yet published"}
           </p>
         </div>
-      </div>
 
-      <DeliveryGallery assets={assets} />
+        <DeliveryGallery assets={assets} />
 
-      {isOwnerSide && (
-        <section className="mt-12">
-          <h2 className="mb-3 text-sm font-medium text-neutral-700">
-            Access log <span className="font-normal text-neutral-400">· proof of delivery</span>
-          </h2>
-          <AuditLog projectId={projectId} />
-        </section>
-      )}
+        {isOwnerSide && (
+          <section className="mt-14">
+            <h2 className="kicker mb-3">Access log · proof of delivery</h2>
+            <AuditLog projectId={projectId} />
+          </section>
+        )}
+      </main>
     </div>
   );
 }

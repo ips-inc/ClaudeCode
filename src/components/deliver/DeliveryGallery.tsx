@@ -30,7 +30,7 @@ export function DeliveryGallery({ assets }: { assets: DeliveryAsset[] }) {
 
   if (!assets.length) {
     return (
-      <p className="rounded-lg border border-dashed p-10 text-center text-sm text-neutral-400">
+      <p className="rounded-[var(--radius-lg)] border border-dashed hairline p-12 text-center text-[14px] [color:var(--color-mute)]">
         Files are being prepared. Check back shortly.
       </p>
     );
@@ -41,12 +41,12 @@ export function DeliveryGallery({ assets }: { assets: DeliveryAsset[] }) {
 
   return (
     <>
-      <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {assets.map((a) => (
-          <li key={a.id} className="group overflow-hidden rounded-lg border">
+          <li key={a.id} className="card lift group overflow-hidden">
             <button
               onClick={() => (isImage(a.mime) || isVideo(a.mime)) && setLightbox(a)}
-              className="relative flex aspect-square w-full items-center justify-center bg-neutral-100"
+              className="relative flex aspect-square w-full items-center justify-center bg-[color:var(--color-surface-2)]"
             >
               {a.thumbKind ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -56,26 +56,22 @@ export function DeliveryGallery({ assets }: { assets: DeliveryAsset[] }) {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="px-2 text-center text-[11px] uppercase tracking-wider text-neutral-400">
-                  {a.mime.split("/")[1] ?? "file"}
-                </span>
+                <span className="kicker px-2 text-center">{a.mime.split("/")[1] ?? "file"}</span>
               )}
               {isVideo(a.mime) && (
                 <span className="absolute inset-0 flex items-center justify-center">
-                  <span className="rounded-full bg-black/50 px-3 py-1.5 text-white">▶</span>
+                  <span className="rounded-full bg-black/45 px-3.5 py-2 text-white backdrop-blur">▶</span>
                 </span>
               )}
             </button>
-            <div className="flex items-center justify-between gap-2 p-2">
+            <div className="flex items-center justify-between gap-2 p-2.5">
               <div className="min-w-0">
-                <p className="truncate text-xs font-medium" title={a.filename}>
-                  {a.filename}
-                </p>
-                <p className="text-[11px] text-neutral-400">{formatBytes(a.size_bytes)}</p>
+                <p className="truncate text-[12.5px] font-medium" title={a.filename}>{a.filename}</p>
+                <p className="mono text-[10.5px] [color:var(--color-mute)]">{formatBytes(a.size_bytes)}</p>
               </div>
               <a
                 href={`/api/media/${a.id}?dl=1`}
-                className="shrink-0 rounded border px-2 py-1 text-[11px] hover:bg-neutral-900 hover:text-white"
+                className="btn btn-ghost btn-xs shrink-0"
                 title="Download original"
               >
                 ↓

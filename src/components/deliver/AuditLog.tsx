@@ -33,14 +33,14 @@ export function AuditLog({ projectId }: { projectId: string }) {
       .catch(() => setError(true));
   }, [projectId]);
 
-  if (error) return <p className="text-sm text-neutral-400">Log unavailable.</p>;
-  if (!events) return <p className="text-sm text-neutral-400">Loading…</p>;
+  if (error) return <p className="text-[13px] [color:var(--color-mute)]">Log unavailable.</p>;
+  if (!events) return <p className="text-[13px] [color:var(--color-mute)]">Loading…</p>;
   if (!events.length)
-    return <p className="text-sm text-neutral-400">No activity recorded yet.</p>;
+    return <p className="text-[13px] [color:var(--color-mute)]">No activity recorded yet.</p>;
 
   return (
-    <div className="overflow-hidden rounded-lg border">
-      <table className="w-full text-sm">
+    <div className="card overflow-hidden">
+      <table className="w-full text-[13px]">
         <tbody>
           {events.map((e) => {
             const filename =
@@ -48,16 +48,16 @@ export function AuditLog({ projectId }: { projectId: string }) {
                 ? String((e.meta as { filename?: string }).filename ?? "")
                 : "";
             return (
-              <tr key={e.id} className="border-b last:border-0">
-                <td className="px-3 py-2 whitespace-nowrap text-neutral-500">
+              <tr key={e.id} className="border-b hairline last:border-0">
+                <td className="mono whitespace-nowrap px-3.5 py-2.5 text-[11px] [color:var(--color-mute)]">
                   {new Date(e.at).toLocaleString()}
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-3.5 py-2.5">
                   <span className="font-medium">{e.who}</span>{" "}
-                  {LABEL[e.action] ?? e.action}
-                  {filename && <span className="text-neutral-500"> · {filename}</span>}
+                  <span className="[color:var(--color-dim)]">{LABEL[e.action] ?? e.action}</span>
+                  {filename && <span className="[color:var(--color-mute)]"> · {filename}</span>}
                 </td>
-                <td className="px-3 py-2 text-right font-mono text-[11px] text-neutral-400">
+                <td className="mono px-3.5 py-2.5 text-right text-[11px] [color:var(--color-faint)]">
                   {e.ip ?? ""}
                 </td>
               </tr>

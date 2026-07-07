@@ -158,105 +158,100 @@ export function FrameReview({
   const openCount = comments.filter((c) => !c.parent_id && !c.resolved_at).length;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-      {/* Player */}
+    <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
+      {/* Player — theater */}
       <div className="min-w-0">
-        <div className="overflow-hidden rounded-lg bg-black">
+        <div className="theater overflow-hidden rounded-[var(--radius)] border hairline p-4">
           {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
           <video
             ref={videoRef}
             src={src}
             poster={poster ?? undefined}
             controls
-            className="aspect-video w-full"
+            className="mx-auto max-h-[68vh] w-full rounded-lg"
             onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
             onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
           >
             {vttUrl && <track kind="captions" src={vttUrl} default />}
           </video>
-        </div>
 
-        {/* Transport + frame readout */}
-        <div className="mt-2 flex items-center gap-2 text-sm">
-          <button onClick={() => step(-1)} className="rounded border px-2 py-1 hover:bg-neutral-100" title="Previous frame">
-            ◄
-          </button>
-          <button onClick={() => step(1)} className="rounded border px-2 py-1 hover:bg-neutral-100" title="Next frame">
-            ►
-          </button>
-          <span className="font-mono text-xs tabular-nums text-neutral-600">
-            {formatSmpte(currentTime, fps)}
-          </span>
-          <span className="ml-auto text-xs text-neutral-400">
-            frame {currentFrame} · {fps} fps
-          </span>
-        </div>
+          {/* Transport + frame readout */}
+          <div className="mt-3 flex items-center gap-2">
+            <button onClick={() => step(-1)} className="chip !bg-white/5 hover:!bg-white/10" title="Previous frame">◄</button>
+            <button onClick={() => step(1)} className="chip !bg-white/5 hover:!bg-white/10" title="Next frame">►</button>
+            <span className="mono text-xs text-white/80">{formatSmpte(currentTime, fps)}</span>
+            <span className="kicker ml-auto">frame {currentFrame} · {fps} fps</span>
+          </div>
 
-        {/* Comment timeline */}
-        <div className="relative mt-3 h-6">
-          <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-neutral-200" />
-          {roots
-            .filter((c) => c.timecode_s != null && duration > 0)
-            .map((c) => (
-              <button
-                key={c.id}
-                onClick={() => seekToFrame(c.frame ?? timeToFrame(c.timecode_s!, fps))}
-                title={`${formatSmpte(c.timecode_s!, c.fps ?? fps)} — ${c.author_name}`}
-                className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-amber-500 shadow hover:scale-125"
-                style={{ left: `${Math.min(100, (c.timecode_s! / duration) * 100)}%` }}
-              />
-            ))}
+          {/* Comment timeline */}
+          <div className="relative mt-3 h-5">
+            <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-white/15" />
+            {roots
+              .filter((c) => c.timecode_s != null && duration > 0)
+              .map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => seekToFrame(c.frame ?? timeToFrame(c.timecode_s!, fps))}
+                  title={`${formatSmpte(c.timecode_s!, c.fps ?? fps)} — ${c.author_name}`}
+                  className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black shadow transition hover:scale-125"
+                  style={{
+                    left: `${Math.min(100, (c.timecode_s! / duration) * 100)}%`,
+                    background: c.resolved_at ? "var(--color-line-strong)" : "var(--color-amber)",
+                  }}
+                />
+              ))}
+          </div>
         </div>
       </div>
 
       {/* Comments rail */}
-      <div className="flex min-h-0 flex-col rounded-lg border">
-        <div className="flex items-center justify-between border-b px-3 py-2">
-          <span className="text-sm font-medium">
+      <div className="card flex min-h-0 flex-col">
+        <div className="flex items-center justify-between border-b hairline px-4 py-3">
+          <span className="text-[13px] font-medium">
             {openCount} open comment{openCount === 1 ? "" : "s"}
           </span>
-          <label className="flex items-center gap-1.5 text-xs text-neutral-500">
+          <label className="flex cursor-pointer items-center gap-1.5 text-[11px] [color:var(--color-mute)]">
             <input type="checkbox" checked={showResolved} onChange={(e) => setShowResolved(e.target.checked)} />
-            Show resolved
+            Resolved
           </label>
         </div>
 
-        <ul className="flex-1 space-y-2 overflow-y-auto p-3" style={{ maxHeight: 420 }}>
+        <ul className="scroll-slim flex-1 space-y-2 overflow-y-auto p-3" style={{ maxHeight: 440 }}>
           {roots.length === 0 && (
-            <li className="py-8 text-center text-sm text-neutral-400">
+            <li className="py-10 text-center text-[13px] [color:var(--color-mute)]">
               No comments yet. Scrub to a frame and leave the first note.
             </li>
           )}
           {roots.map((c) => (
-            <li key={c.id} className={`rounded-md border p-2.5 ${c.resolved_at ? "opacity-60" : ""}`}>
-              <div className="flex items-center gap-2 text-xs">
+            <li key={c.id} className={`rounded-[var(--radius-sm)] border hairline bg-[color:var(--color-surface-2)] p-3 ${c.resolved_at ? "opacity-55" : ""}`}>
+              <div className="flex items-center gap-2">
                 {c.timecode_s != null && (
                   <button
                     onClick={() => seekToFrame(c.frame ?? timeToFrame(c.timecode_s!, fps))}
-                    className="rounded bg-neutral-900 px-1.5 py-0.5 font-mono text-[11px] text-white tabular-nums"
+                    className="mono rounded bg-white/8 px-1.5 py-0.5 text-[11px] hover:bg-white/14"
                   >
                     {formatSmpte(c.timecode_s!, c.fps ?? fps)}
                   </button>
                 )}
-                <span className="font-medium">{c.author_name}</span>
-                {c.is_admin && <span className="text-amber-600">owner</span>}
-                {c.resolved_at && <span className="text-emerald-600">✓ resolved</span>}
+                <span className="text-[13px] font-medium">{c.author_name}</span>
+                {c.is_admin && <span className="text-[11px] [color:var(--color-amber)]">owner</span>}
+                {c.resolved_at && <span className="text-[11px] [color:var(--color-good)]">✓</span>}
               </div>
-              <p className="mt-1.5 text-sm whitespace-pre-wrap">{c.body}</p>
+              <p className="mt-1.5 text-[13px] whitespace-pre-wrap [color:var(--color-dim)]">{c.body}</p>
 
               {repliesOf(c.id).map((r) => (
-                <div key={r.id} className="mt-2 border-l-2 pl-2.5">
-                  <span className="text-xs font-medium">{r.author_name}</span>
-                  <p className="text-sm whitespace-pre-wrap">{r.body}</p>
+                <div key={r.id} className="mt-2 border-l border-[color:var(--color-line)] pl-2.5">
+                  <span className="text-[12px] font-medium">{r.author_name}</span>
+                  <p className="text-[13px] whitespace-pre-wrap [color:var(--color-dim)]">{r.body}</p>
                 </div>
               ))}
 
-              <div className="mt-1.5 flex gap-3 text-xs text-neutral-500">
-                <button onClick={() => setReplyTo(replyTo === c.id ? null : c.id)} className="hover:text-neutral-900">
-                  {replyTo === c.id ? "Cancel reply" : "Reply"}
+              <div className="mt-2 flex gap-3 text-[11px] [color:var(--color-mute)]">
+                <button onClick={() => setReplyTo(replyTo === c.id ? null : c.id)} className="hover:[color:var(--color-ink)]">
+                  {replyTo === c.id ? "Cancel" : "Reply"}
                 </button>
                 {canResolve && (
-                  <button onClick={() => toggleResolve(c)} className="hover:text-neutral-900">
+                  <button onClick={() => toggleResolve(c)} className="hover:[color:var(--color-ink)]">
                     {c.resolved_at ? "Reopen" : "Resolve"}
                   </button>
                 )}
@@ -266,13 +261,13 @@ export function FrameReview({
         </ul>
 
         {/* Composer */}
-        <div className="border-t p-3">
+        <div className="border-t hairline p-3">
           {replyTo ? (
-            <p className="mb-1.5 text-xs text-neutral-500">Replying to a comment</p>
+            <p className="mb-1.5 text-[11px] [color:var(--color-mute)]">Replying to a comment</p>
           ) : (
-            <label className="mb-1.5 flex items-center gap-1.5 text-xs text-neutral-600">
+            <label className="mb-1.5 flex cursor-pointer items-center gap-1.5 text-[11px] [color:var(--color-dim)]">
               <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} />
-              Pin to {formatSmpte(currentTime, fps)} (frame {currentFrame})
+              Pin to <span className="mono">{formatSmpte(currentTime, fps)}</span>
             </label>
           )}
           <textarea
@@ -282,14 +277,10 @@ export function FrameReview({
               if ((e.metaKey || e.ctrlKey) && e.key === "Enter") post();
             }}
             rows={2}
-            placeholder="Add a comment…  (⌘↵ to send)"
-            className="w-full resize-none rounded-md border p-2 text-sm outline-none focus:border-neutral-400"
+            placeholder="Add a comment…  (⌘↵)"
+            className="field"
           />
-          <button
-            onClick={post}
-            disabled={busy || !draft.trim()}
-            className="mt-1.5 w-full rounded-md bg-neutral-900 py-1.5 text-sm text-white disabled:opacity-40"
-          >
+          <button onClick={post} disabled={busy || !draft.trim()} className="btn btn-accent btn-sm mt-2 w-full">
             {busy ? "Posting…" : replyTo ? "Reply" : "Comment"}
           </button>
         </div>

@@ -4,6 +4,7 @@ import { getActor, getAuthorizedAsset } from "@/lib/authz";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { presignGet } from "@/lib/s3";
 import { FrameReview, type ReviewComment } from "@/components/review/FrameReview";
+import { StudioHeader } from "@/components/studio/StudioHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -50,25 +51,26 @@ export default async function ReviewPage({
   if (!src) notFound();
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8">
-      <Link href={`/studio/p/${id}`} className="text-xs uppercase tracking-widest text-neutral-400 hover:text-neutral-600">
-        ← {asset.filename}
-      </Link>
-      <h1 className="mt-2 mb-6 text-xl font-medium">{asset.filename}</h1>
-      {byKind.get("proxy") ? null : (
-        <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
-          Playing the original — a scrubbing proxy will appear once the worker finishes transcoding.
-        </p>
-      )}
-      <FrameReview
+    <>
+      <StudioHeader />
+      <div className="mx-auto max-w-6xl px-6 py-8">
+        <Link href={`/studio/p/${id}`} className="kicker hover:[color:var(--color-ink)]">← Back to project</Link>
+        <h1 className="display mt-3 mb-6 text-2xl">{asset.filename}</h1>
+        {byKind.get("proxy") ? null : (
+          <p className="mb-4 rounded-[var(--radius-sm)] border border-[color:var(--color-amber)]/30 bg-[color:var(--color-amber)]/10 px-3 py-2 text-[12px] [color:var(--color-amber)]">
+            Playing the original — a scrubbing proxy appears once the worker finishes transcoding.
+          </p>
+        )}
+        <FrameReview
         assetId={assetId}
         fps={asset.fps}
         src={src}
         poster={poster}
         vttUrl={vttUrl}
-        canResolve={actor.role !== "client"}
-        initialComments={(comments ?? []) as ReviewComment[]}
-      />
-    </div>
+          canResolve={actor.role !== "client"}
+          initialComments={(comments ?? []) as ReviewComment[]}
+        />
+      </div>
+    </>
   );
 }

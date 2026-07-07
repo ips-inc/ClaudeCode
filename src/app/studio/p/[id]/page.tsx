@@ -6,6 +6,7 @@ import { projectAssetsWithThumbs, projectFolders } from "@/lib/deliveries";
 import { MultipartUploader } from "@/components/MultipartUploader";
 import { CopyButton } from "@/components/CopyButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { StudioHeader } from "@/components/studio/StudioHeader";
 import {
   setPublished,
   deleteAsset,
@@ -73,147 +74,142 @@ export default async function ProjectDetail({
   const subfolders = folders.filter((f) => (f.parent_id ?? null) === (currentFolder ?? null));
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
-      <Link href="/studio" className="text-xs uppercase tracking-widest text-neutral-400 hover:text-neutral-600">← Studio</Link>
-      <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-medium">{project.title}</h1>
-          <p className="mt-0.5 text-xs text-neutral-400">
-            {(project.clients as { name?: string } | null)?.name} · {KIND_META[project.kind as ProjectKind].replaces}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href={`/deliver/${id}`} className="rounded-md border px-3 py-1.5 text-sm">Preview delivery</Link>
-          <form action={setPublished}>
-            <input type="hidden" name="id" value={id} />
-            <input type="hidden" name="published" value={project.published ? "false" : "true"} />
-            <button className={`rounded-md px-3 py-1.5 text-sm text-white ${project.published ? "bg-neutral-500" : "bg-emerald-600"}`}>
-              {project.published ? "Unpublish" : "Publish to client"}
-            </button>
-          </form>
-        </div>
-      </div>
-
-      {/* Drive folder navigation */}
-      {isDrive && (
-        <section className="mt-8">
-          <nav className="flex flex-wrap items-center gap-1 text-sm">
-            <Link href={`/studio/p/${id}`} className="text-neutral-500 hover:text-neutral-900">Home</Link>
-            {crumbs.map((c) => (
-              <span key={c.id}>
-                <span className="text-neutral-300"> / </span>
-                <Link href={`/studio/p/${id}?folder=${c.id}`} className="text-neutral-500 hover:text-neutral-900">{c.name}</Link>
-              </span>
-            ))}
-          </nav>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {subfolders.map((f) => (
-              <span key={f.id} className="flex items-center rounded-md border bg-white">
-                <Link href={`/studio/p/${id}?folder=${f.id}`} className="px-3 py-1.5 text-sm hover:underline">📁 {f.name}</Link>
-                <form action={deleteFolder} className="pr-1.5">
-                  <input type="hidden" name="id" value={f.id} />
-                  <input type="hidden" name="projectId" value={id} />
-                  <ConfirmButton message={`Delete folder "${f.name}" and everything inside?`} className="px-1 text-xs text-neutral-400 hover:text-red-600">✕</ConfirmButton>
-                </form>
-              </span>
-            ))}
-            <form action={createFolder} className="flex items-center gap-1">
-              <input type="hidden" name="projectId" value={id} />
-              <input type="hidden" name="parentId" value={currentFolder ?? ""} />
-              <input name="name" placeholder="New folder" className="w-32 rounded-md border px-2 py-1.5 text-sm" />
-              <button className="rounded-md border px-2 py-1.5 text-xs">Add</button>
+    <>
+      <StudioHeader />
+      <div className="mx-auto max-w-5xl px-6 py-10">
+        <Link href="/studio" className="kicker hover:[color:var(--color-ink)]">← Studio</Link>
+        <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="display text-3xl">{project.title}</h1>
+            <p className="kicker mt-1.5">
+              {(project.clients as { name?: string } | null)?.name} · replaces {KIND_META[project.kind as ProjectKind].replaces}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href={`/deliver/${id}`} className="btn btn-ghost btn-sm">Preview delivery</Link>
+            <form action={setPublished}>
+              <input type="hidden" name="id" value={id} />
+              <input type="hidden" name="published" value={project.published ? "false" : "true"} />
+              <button className={`btn btn-sm ${project.published ? "btn-ghost" : "btn-accent"}`}>
+                {project.published ? "Unpublish" : "Publish to client"}
+              </button>
             </form>
           </div>
-        </section>
-      )}
+        </div>
 
-      {/* Upload */}
-      <section className="mt-8">
-        <h2 className="mb-2 text-sm font-medium">Upload{isDrive && crumbs.length ? ` to ${crumbs[crumbs.length - 1].name}` : ""}</h2>
-        <MultipartUploader projectId={id} folderId={currentFolder ?? null} label="Drop media or files of any size" />
-      </section>
-
-      {/* Assets */}
-      <section className="mt-8">
-        <h2 className="mb-3 text-sm font-medium">Files · {assets.length}</h2>
-        {assets.length === 0 ? (
-          <p className="text-sm text-neutral-400">Nothing uploaded yet.</p>
-        ) : (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {assets.map((a) => (
-              <li key={a.id} className="overflow-hidden rounded-lg border">
-                <div className="flex aspect-square items-center justify-center bg-neutral-100">
-                  {a.thumbKind ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`/api/media/${a.id}?r=${a.thumbKind}`} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="px-2 text-center text-[11px] uppercase tracking-wider text-neutral-400">
-                      {a.mime.split("/")[1] ?? "file"}
-                    </span>
-                  )}
-                </div>
-                <div className="p-2">
-                  <p className="truncate text-xs font-medium" title={a.filename}>{a.filename}</p>
-                  <p className="text-[11px] text-neutral-400">{fmtBytes(a.size_bytes)}</p>
-                  <div className="mt-1.5 flex items-center gap-2 text-[11px]">
-                    {isReview && a.mime.startsWith("video/") && (
-                      <Link href={`/studio/p/${id}/a/${a.id}`} className="rounded border px-1.5 py-0.5 hover:bg-neutral-900 hover:text-white">
-                        Review
-                      </Link>
-                    )}
-                    <form action={deleteAsset}>
-                      <input type="hidden" name="id" value={a.id} />
-                      <input type="hidden" name="projectId" value={id} />
-                      <ConfirmButton message={`Delete ${a.filename}?`} className="rounded border px-1.5 py-0.5 text-red-600 hover:bg-red-600 hover:text-white">
-                        Delete
-                      </ConfirmButton>
-                    </form>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* Share links */}
-      <section className="mt-10">
-        <h2 className="mb-3 text-sm font-medium">Share links</h2>
-        <ul className="space-y-2">
-          {activeLinks.map((l) => {
-            const url = `${origin}/s/${l.slug}`;
-            const expired = l.expires_at && new Date(l.expires_at) < new Date();
-            return (
-              <li key={l.id} className="flex flex-wrap items-center gap-2 rounded-lg border p-3 text-sm">
-                <span className="font-medium">{l.label || "Link"}</span>
-                {l.password_hash && <span className="text-xs text-neutral-400">🔒</span>}
-                {l.expires_at && <span className={`text-xs ${expired ? "text-red-500" : "text-neutral-400"}`}>{expired ? "expired" : "expires"} {new Date(l.expires_at).toLocaleDateString()}</span>}
-                <span className="text-xs text-neutral-400">{l.view_count} views · {l.download_count} dl{l.max_downloads ? `/${l.max_downloads}` : ""}</span>
-                <span className="ml-auto flex items-center gap-2">
-                  <CopyButton text={url} />
-                  <form action={revokeShareLink}>
-                    <input type="hidden" name="id" value={l.id} />
+        {/* Drive folder navigation */}
+        {isDrive && (
+          <section className="mt-8">
+            <nav className="flex flex-wrap items-center gap-1 text-[13px]">
+              <Link href={`/studio/p/${id}`} className="[color:var(--color-dim)] hover:[color:var(--color-ink)]">Home</Link>
+              {crumbs.map((c) => (
+                <span key={c.id}>
+                  <span className="[color:var(--color-faint)]"> / </span>
+                  <Link href={`/studio/p/${id}?folder=${c.id}`} className="[color:var(--color-dim)] hover:[color:var(--color-ink)]">{c.name}</Link>
+                </span>
+              ))}
+            </nav>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {subfolders.map((f) => (
+                <span key={f.id} className="flex items-center rounded-[var(--radius-sm)] border hairline bg-[color:var(--color-surface)]">
+                  <Link href={`/studio/p/${id}?folder=${f.id}`} className="px-3 py-1.5 text-[13px] hover:[color:var(--color-ink)]">📁 {f.name}</Link>
+                  <form action={deleteFolder} className="pr-1.5">
+                    <input type="hidden" name="id" value={f.id} />
                     <input type="hidden" name="projectId" value={id} />
-                    <ConfirmButton message="Revoke this link?" className="rounded border px-2 py-1 text-xs text-red-600 hover:bg-red-600 hover:text-white">
-                      Revoke
-                    </ConfirmButton>
+                    <ConfirmButton message={`Delete folder "${f.name}" and everything inside?`} className="px-1 text-xs [color:var(--color-mute)] hover:[color:var(--color-danger)]">✕</ConfirmButton>
                   </form>
                 </span>
-              </li>
-            );
-          })}
-        </ul>
+              ))}
+              <form action={createFolder} className="flex items-center gap-1">
+                <input type="hidden" name="projectId" value={id} />
+                <input type="hidden" name="parentId" value={currentFolder ?? ""} />
+                <input name="name" placeholder="New folder" className="field !h-9 !w-36 text-[13px]" />
+                <button className="btn btn-ghost btn-sm">Add</button>
+              </form>
+            </div>
+          </section>
+        )}
 
-        <form action={createShareLink} className="mt-3 grid gap-2 rounded-lg border bg-neutral-50 p-3 sm:grid-cols-2">
-          <input type="hidden" name="projectId" value={id} />
-          <input name="label" placeholder="Label (e.g. For the agency)" className="rounded-md border px-3 py-2 text-sm" />
-          <input name="password" placeholder="Password (optional)" autoComplete="off" className="rounded-md border px-3 py-2 text-sm" />
-          <label className="text-xs text-neutral-500">Expires<input name="expiresAt" type="date" className="mt-1 w-full rounded-md border px-3 py-2 text-sm" /></label>
-          <label className="text-xs text-neutral-500">Max downloads<input name="maxDownloads" type="number" min="1" className="mt-1 w-full rounded-md border px-3 py-2 text-sm" /></label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="allowDownloads" defaultChecked /> Allow downloads</label>
-          <div className="sm:col-span-2"><button className="rounded-md bg-neutral-900 px-4 py-2 text-sm text-white">Create link</button></div>
-        </form>
-      </section>
-    </div>
+        {/* Upload */}
+        <section className="mt-8">
+          <h2 className="kicker mb-3">Upload{isDrive && crumbs.length ? ` — ${crumbs[crumbs.length - 1].name}` : ""}</h2>
+          <MultipartUploader projectId={id} folderId={currentFolder ?? null} label="Drop media or files of any size" />
+        </section>
+
+        {/* Assets */}
+        <section className="mt-10">
+          <h2 className="kicker mb-3">Files · {assets.length}</h2>
+          {assets.length === 0 ? (
+            <p className="text-[13px] [color:var(--color-mute)]">Nothing uploaded yet.</p>
+          ) : (
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {assets.map((a) => (
+                <li key={a.id} className="card lift overflow-hidden">
+                  <div className="flex aspect-square items-center justify-center bg-[color:var(--color-surface-2)]">
+                    {a.thumbKind ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={`/api/media/${a.id}?r=${a.thumbKind}`} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="kicker px-2 text-center">{a.mime.split("/")[1] ?? "file"}</span>
+                    )}
+                  </div>
+                  <div className="p-2.5">
+                    <p className="truncate text-[12.5px] font-medium" title={a.filename}>{a.filename}</p>
+                    <p className="mono text-[10.5px] [color:var(--color-mute)]">{fmtBytes(a.size_bytes)}</p>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      {isReview && a.mime.startsWith("video/") && (
+                        <Link href={`/studio/p/${id}/a/${a.id}`} className="btn btn-ghost btn-xs">Review</Link>
+                      )}
+                      <form action={deleteAsset}>
+                        <input type="hidden" name="id" value={a.id} />
+                        <input type="hidden" name="projectId" value={id} />
+                        <ConfirmButton message={`Delete ${a.filename}?`} className="btn btn-ghost btn-xs !text-[color:var(--color-danger)]">Delete</ConfirmButton>
+                      </form>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* Share links */}
+        <section className="mt-12">
+          <h2 className="kicker mb-3">Share links</h2>
+          <ul className="space-y-2">
+            {activeLinks.map((l) => {
+              const url = `${origin}/s/${l.slug}`;
+              const expired = l.expires_at && new Date(l.expires_at) < new Date();
+              return (
+                <li key={l.id} className="card flex flex-wrap items-center gap-2 p-3 text-[13px]">
+                  <span className="font-medium">{l.label || "Link"}</span>
+                  {l.password_hash && <span className="text-xs [color:var(--color-mute)]">🔒</span>}
+                  {l.expires_at && <span className={`text-xs ${expired ? "[color:var(--color-danger)]" : "[color:var(--color-mute)]"}`}>{expired ? "expired" : "expires"} {new Date(l.expires_at).toLocaleDateString()}</span>}
+                  <span className="mono text-[11px] [color:var(--color-mute)]">{l.view_count} views · {l.download_count} dl{l.max_downloads ? `/${l.max_downloads}` : ""}</span>
+                  <span className="ml-auto flex items-center gap-2">
+                    <CopyButton text={url} />
+                    <form action={revokeShareLink}>
+                      <input type="hidden" name="id" value={l.id} />
+                      <input type="hidden" name="projectId" value={id} />
+                      <ConfirmButton message="Revoke this link?" className="btn btn-ghost btn-xs !text-[color:var(--color-danger)]">Revoke</ConfirmButton>
+                    </form>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+
+          <form action={createShareLink} className="card mt-3 grid gap-2.5 bg-[color:var(--color-surface-2)] p-4 sm:grid-cols-2">
+            <input type="hidden" name="projectId" value={id} />
+            <input name="label" placeholder="Label (e.g. For the agency)" className="field" />
+            <input name="password" placeholder="Password (optional)" autoComplete="off" className="field" />
+            <label className="kicker">Expires<input name="expiresAt" type="date" className="field mt-1.5 normal-case tracking-normal" /></label>
+            <label className="kicker">Max downloads<input name="maxDownloads" type="number" min="1" className="field mt-1.5 normal-case tracking-normal" /></label>
+            <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" name="allowDownloads" defaultChecked className="accent-[color:var(--color-accent)]" /> Allow downloads</label>
+            <div className="sm:col-span-2"><button className="btn btn-accent btn-sm">Create link</button></div>
+          </form>
+        </section>
+      </div>
+    </>
   );
 }

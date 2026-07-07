@@ -22,7 +22,7 @@ export default async function PublicShare({
   if (share.status === "not_found" || share.status === "expired") {
     return (
       <Shell>
-        <p className="text-center text-sm text-neutral-500">
+        <p className="text-center text-[14px] [color:var(--color-mute)]">
           {share.status === "expired" ? "This link has expired." : "This link is not available."}
         </p>
       </Shell>
@@ -34,10 +34,10 @@ export default async function PublicShare({
       <Shell title={share.project.title}>
         <form action={unlockShare} className="mx-auto max-w-xs space-y-3">
           <input type="hidden" name="slug" value={slug} />
-          <p className="text-center text-sm text-neutral-500">This delivery is password protected.</p>
-          <input type="password" name="password" autoFocus required placeholder="Password" className="w-full rounded-md border px-3 py-2 text-sm" />
-          {err && <p className="text-center text-xs text-red-600">Incorrect password.</p>}
-          <button className="w-full rounded-md bg-neutral-900 py-2 text-sm text-white">View</button>
+          <p className="text-center text-[13px] [color:var(--color-mute)]">This delivery is password protected.</p>
+          <input type="password" name="password" autoFocus required placeholder="Password" className="field" />
+          {err && <p className="text-center text-[12px] [color:var(--color-danger)]">Incorrect password.</p>}
+          <button className="btn btn-accent w-full">View</button>
         </form>
       </Shell>
     );
@@ -113,15 +113,15 @@ export default async function PublicShare({
 
 function Shell({ children, title, subtitle }: { children: React.ReactNode; title?: string; subtitle?: string | null }) {
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b px-6 py-4 text-center">
-        <p className="text-sm font-medium tracking-wide">ISAAC POOLE</p>
+    <div className="surface-light min-h-screen">
+      <header className="glass sticky top-0 z-20 border-b hairline px-6 py-4 text-center">
+        <span className="wordmark text-sm">ISAAC POOLE</span>
       </header>
-      <main className="mx-auto max-w-6xl px-6 py-12">
+      <main className="mx-auto max-w-6xl px-6 py-14">
         {(title || subtitle) && (
           <div className="mb-10 text-center">
-            {title && <h1 className="text-2xl font-medium">{title}</h1>}
-            {subtitle && <p className="mt-1 text-sm text-neutral-500">{subtitle}</p>}
+            {title && <h1 className="display text-4xl sm:text-5xl">{title}</h1>}
+            {subtitle && <p className="mx-auto mt-3 max-w-xl text-[14px] [color:var(--color-dim)]">{subtitle}</p>}
           </div>
         )}
         {children}

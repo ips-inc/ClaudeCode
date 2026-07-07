@@ -7,7 +7,7 @@ export function CopyButton({ text, label = "Copy link" }: { text: string; label?
   return (
     <button
       type="button"
-      className="btn-ghost btn-small"
+      className="btn btn-ghost btn-xs"
       onClick={async () => {
         await navigator.clipboard.writeText(text);
         setCopied(true);

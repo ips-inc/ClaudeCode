@@ -137,8 +137,10 @@ export function MultipartUploader({
           setDragging(false);
           handleFiles(e.dataTransfer.files);
         }}
-        className={`cursor-pointer rounded-lg border-2 border-dashed p-8 text-center text-sm transition ${
-          dragging ? "border-neutral-900 bg-neutral-50" : "border-neutral-300 text-neutral-500"
+        className={`cursor-pointer rounded-[var(--radius)] border border-dashed p-8 text-center text-[13px] transition ${
+          dragging
+            ? "border-[color:var(--color-accent)] bg-[color:var(--color-surface-2)]"
+            : "border-[color:var(--color-line)] [color:var(--color-mute)] hover:border-[color:var(--color-line-strong)]"
         }`}
       >
         {label}
@@ -157,17 +159,20 @@ export function MultipartUploader({
             <li key={i.id} className="text-xs">
               <div className="flex justify-between">
                 <span className="truncate">{i.name}</span>
-                <span className="ml-2 shrink-0 text-neutral-500">
+                <span className="mono ml-2 shrink-0 text-[11px] [color:var(--color-mute)]">
                   {i.status === "uploading" && `${Math.round(i.progress * 100)}%`}
                   {i.status === "processing" && "finishing…"}
-                  {i.status === "done" && "✓"}
-                  {i.status === "error" && <span className="text-red-600" title={i.error}>failed</span>}
+                  {i.status === "done" && <span className="[color:var(--color-good)]">done</span>}
+                  {i.status === "error" && <span className="[color:var(--color-danger)]" title={i.error}>failed</span>}
                 </span>
               </div>
-              <div className="mt-1 h-1 overflow-hidden rounded bg-neutral-200">
+              <div className="mt-1 h-1 overflow-hidden rounded-full bg-[color:var(--color-surface-2)]">
                 <div
-                  className={`h-full ${i.status === "error" ? "bg-red-500" : "bg-neutral-900"}`}
-                  style={{ width: `${Math.round(i.progress * 100)}%` }}
+                  className="h-full transition-[width]"
+                  style={{
+                    width: `${Math.round(i.progress * 100)}%`,
+                    background: i.status === "error" ? "var(--color-danger)" : "var(--color-accent)",
+                  }}
                 />
               </div>
             </li>

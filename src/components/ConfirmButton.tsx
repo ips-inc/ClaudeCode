@@ -3,7 +3,7 @@
 export function ConfirmButton({
   message,
   children,
-  className = "btn-ghost btn-small",
+  className = "btn btn-ghost btn-xs",
 }: {
   message: string;
   children: React.ReactNode;
