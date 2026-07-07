@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActor, canAccessProject } from "@/lib/authz";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -24,23 +24,23 @@ export async function GET(
   const q = (request.nextUrl.searchParams.get("q") ?? "").trim().slice(0, 200);
   if (!q) return NextResponse.json({ results: [] });
 
-  const admin = supabaseAdmin();
+  const db = await supabaseServer();
   // Constrain to this project's assets first, then run FTS on segments.
-  const { data: assets } = await admin
+  const { data: assets } = await db
     .from("assets")
     .select("id, filename")
     .eq("project_id", projectId);
   if (!assets?.length) return NextResponse.json({ results: [] });
   const nameById = new Map(assets.map((a) => [a.id, a.filename]));
 
-  const { data: transcripts } = await admin
+  const { data: transcripts } = await db
     .from("transcripts")
     .select("id, asset_id")
     .in("asset_id", assets.map((a) => a.id));
   if (!transcripts?.length) return NextResponse.json({ results: [] });
   const assetByTranscript = new Map(transcripts.map((t) => [t.id, t.asset_id]));
 
-  const { data: hits, error } = await admin
+  const { data: hits, error } = await db
     .from("transcript_segments")
     .select("transcript_id, start_s, end_s, text")
     .in("transcript_id", transcripts.map((t) => t.id))

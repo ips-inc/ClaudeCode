@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActor, getAuthorizedAsset, audit } from "@/lib/authz";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -25,7 +25,7 @@ export async function GET(
   const asset = await getAuthorizedAsset(actor, assetId);
   if (!asset) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-  const { data } = await supabaseAdmin()
+  const { data } = await (await supabaseServer())
     .from("comments")
     .select(
       "id, parent_id, author_id, author_name, is_admin, body, timecode_s, frame, fps, resolved_at, created_at"
@@ -57,8 +57,8 @@ export async function POST(
   const fps = body?.fps != null ? Number(body.fps) : null;
 
   // A reply inherits its thread's pin; only roots carry a fresh timecode.
-  const admin = supabaseAdmin();
-  const { data: comment, error } = await admin
+  const db = await supabaseServer();
+  const { data: comment, error } = await db
     .from("comments")
     .insert({
       asset_id: assetId,

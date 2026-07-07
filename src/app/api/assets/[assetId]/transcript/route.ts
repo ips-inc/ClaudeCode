@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActor, getAuthorizedAsset } from "@/lib/authz";
 import { presignGet } from "@/lib/s3";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -23,8 +23,8 @@ export async function GET(
   const asset = await getAuthorizedAsset(actor, assetId);
   if (!asset) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-  const admin = supabaseAdmin();
-  const { data: transcript } = await admin
+  const db = await supabaseServer();
+  const { data: transcript } = await db
     .from("transcripts")
     .select("id, language, status, srt_key, vtt_key, full_text")
     .eq("asset_id", assetId)
@@ -45,7 +45,7 @@ export async function GET(
     return NextResponse.redirect(url, 302);
   }
 
-  const { data: segments } = await admin
+  const { data: segments } = await db
     .from("transcript_segments")
     .select("start_s, end_s, text, words")
     .eq("transcript_id", transcript.id)

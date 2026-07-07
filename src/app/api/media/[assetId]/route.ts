@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getActor, getAuthorizedAsset, audit } from "@/lib/authz";
 import { presignGet } from "@/lib/s3";
 import { isDangerousInline } from "@/lib/filetype";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -36,7 +36,7 @@ export async function GET(
   let filename = asset.filename;
 
   if (renditionKind) {
-    const { data: rendition } = await supabaseAdmin()
+    const { data: rendition } = await (await supabaseServer())
       .from("renditions")
       .select("storage_key, mime, kind")
       .eq("asset_id", asset.id)

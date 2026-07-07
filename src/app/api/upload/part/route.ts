@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActor, canWriteProject } from "@/lib/authz";
 import { presignUploadPart } from "@/lib/s3";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
-  const { data: asset } = await supabaseAdmin()
+  const { data: asset } = await (await supabaseServer())
     .from("assets")
     .select("id, project_id, storage_key")
     .eq("id", assetId)

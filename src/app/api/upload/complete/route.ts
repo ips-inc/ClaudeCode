@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getActor, canWriteProject, audit } from "@/lib/authz";
 import { completeMultipart, presignGet } from "@/lib/s3";
 import { sniff } from "@/lib/filetype";
+import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -24,8 +25,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
-  const admin = supabaseAdmin();
-  const { data: asset } = await admin
+  const db = await supabaseServer();
+  const { data: asset } = await db
     .from("assets")
     .select("id, project_id, storage_key, filename, mime")
     .eq("id", assetId)
@@ -60,14 +61,15 @@ export async function POST(request: NextRequest) {
     // Sniff failure leaves the declared type but keeps scan pending.
   }
 
-  await admin
+  await db
     .from("assets")
     .update({ mime, scan_status: "clean" })
     .eq("id", assetId);
 
-  // Queue media pipeline work.
+  // Queue media pipeline work. The jobs table is worker-owned (RLS is
+  // select-only for members), so enqueue with the service role.
   if (category === "video" || category === "audio") {
-    await admin.from("jobs").insert([
+    await supabaseAdmin().from("jobs").insert([
       { asset_id: assetId, type: "transcode" },
       { asset_id: assetId, type: "transcribe" },
     ]);

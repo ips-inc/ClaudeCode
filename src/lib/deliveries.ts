@@ -1,45 +1,26 @@
 import "server-only";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 import type { Actor } from "@/lib/authz";
 
 /**
- * Projects a given actor is allowed to see, with client isolation applied in
- * the data layer (defense in depth on top of RLS):
- *   - owner: everything
- *   - collaborator: projects of clients they belong to
- *   - client: only PUBLISHED projects of clients they belong to
+ * Reads for authenticated delivery/studio surfaces, all through the caller's
+ * session. RLS does the isolation: owners see everything, collaborators see
+ * their clients' projects, clients see only published projects of their clients.
  */
-export async function visibleProjects(actor: Actor) {
-  const admin = supabaseAdmin();
-  if (actor.role === "owner") {
-    const { data } = await admin
-      .from("projects")
-      .select("id, title, slug, kind, published, client_id, cover_asset_id, created_at, clients(name)")
-      .is("archived_at", null)
-      .order("created_at", { ascending: false });
-    return data ?? [];
-  }
-
-  const { data: memberships } = await admin
-    .from("memberships")
-    .select("client_id")
-    .eq("user_id", actor.id);
-  const clientIds = (memberships ?? []).map((m) => m.client_id);
-  if (!clientIds.length) return [];
-
-  let q = admin
+export async function visibleProjects(_actor: Actor) {
+  const db = await supabaseServer();
+  const { data } = await db
     .from("projects")
     .select("id, title, slug, kind, published, client_id, cover_asset_id, created_at, clients(name)")
-    .in("client_id", clientIds)
-    .is("archived_at", null);
-  if (actor.role === "client") q = q.eq("published", true);
-  const { data } = await q.order("created_at", { ascending: false });
+    .is("archived_at", null)
+    .order("created_at", { ascending: false });
   return data ?? [];
 }
 
 /** Folders of a project (for drive-style navigation). */
 export async function projectFolders(projectId: string) {
-  const { data } = await supabaseAdmin()
+  const db = await supabaseServer();
+  const { data } = await db
     .from("folders")
     .select("id, parent_id, name")
     .eq("project_id", projectId)
@@ -52,23 +33,19 @@ export async function projectFolders(projectId: string) {
  * Pass `folderId` (a folder uuid, or null for the project root) to scope to one
  * folder; omit it (undefined) to return every asset in the project.
  */
-export async function projectAssetsWithThumbs(
-  projectId: string,
-  folderId?: string | null
-) {
-  const admin = supabaseAdmin();
-  let q = admin
+export async function projectAssetsWithThumbs(projectId: string, folderId?: string | null) {
+  const db = await supabaseServer();
+  let q = db
     .from("assets")
     .select("id, folder_id, filename, mime, size_bytes, width, height, duration_s, position, created_at")
     .eq("project_id", projectId)
     .is("version_of", null);
-  if (folderId === null) q = q.is("folder_id", null); // project root only
+  if (folderId === null) q = q.is("folder_id", null);
   else if (typeof folderId === "string") q = q.eq("folder_id", folderId);
-  // folderId === undefined → no folder filter (every asset)
   const { data: assets } = await q.order("position").order("created_at");
   if (!assets?.length) return [];
 
-  const { data: rends } = await admin
+  const { data: rends } = await db
     .from("renditions")
     .select("asset_id, kind, storage_key")
     .in("asset_id", assets.map((a) => a.id))
@@ -76,7 +53,6 @@ export async function projectAssetsWithThumbs(
     .eq("status", "done");
   const thumbByAsset = new Map<string, string>();
   for (const r of rends ?? []) {
-    // prefer thumb; fall back to poster
     if (r.kind === "thumb" || !thumbByAsset.has(r.asset_id)) {
       thumbByAsset.set(r.asset_id, r.kind);
     }

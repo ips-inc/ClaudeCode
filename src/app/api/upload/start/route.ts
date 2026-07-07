@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActor, canWriteProject, audit } from "@/lib/authz";
 import { createMultipart } from "@/lib/s3";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const admin = supabaseAdmin();
-  const { data: project } = await admin
+  const db = await supabaseServer();
+  const { data: project } = await db
     .from("projects")
     .select("id, client_id")
     .eq("id", projectId)
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   const safeName = filename.replace(/[^\w.\- ()]/g, "_");
   const storageKey = `clients/${project.client_id}/projects/${projectId}/${assetId}/${safeName}`;
 
-  const { error } = await admin.from("assets").insert({
+  const { error } = await db.from("assets").insert({
     id: assetId,
     project_id: projectId,
     folder_id: folderId,

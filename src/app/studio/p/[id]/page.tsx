@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getActor } from "@/lib/authz";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 import { projectAssetsWithThumbs, projectFolders } from "@/lib/deliveries";
 import { MultipartUploader } from "@/components/MultipartUploader";
 import { CopyButton } from "@/components/CopyButton";
@@ -36,7 +36,7 @@ export default async function ProjectDetail({
   const actor = await getActor();
   if (!actor || actor.role === "client") redirect("/studio");
   const { id } = await params;
-  const admin = supabaseAdmin();
+  const admin = await supabaseServer();
 
   const { data: project } = await admin
     .from("projects")

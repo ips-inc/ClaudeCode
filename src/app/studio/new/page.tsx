@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getActor } from "@/lib/authz";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 import { createProject } from "@/app/studio/actions";
 import { StudioHeader } from "@/components/studio/StudioHeader";
 import { KIND_META, type ProjectKind } from "@/lib/types";
@@ -13,7 +13,7 @@ export default async function NewProject() {
   const actor = await getActor();
   if (!actor || actor.role === "client") redirect("/studio");
 
-  const { data: clients } = await supabaseAdmin()
+  const { data: clients } = await (await supabaseServer())
     .from("clients")
     .select("id, name")
     .is("archived_at", null)
