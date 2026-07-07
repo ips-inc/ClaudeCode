@@ -15,7 +15,9 @@ export function cleanEnv(value: string | undefined | null): string {
 }
 
 const DEFAULT_URL = "https://lnclobwmfkxtibqnxgip.supabase.co";
-const DEFAULT_ANON = "sb_publishable_JT4aqDprmaITkk5hgxinTw_u7sZaMy9";
+// Legacy anon JWT — broadest compatibility with GoTrue signInWithPassword.
+const DEFAULT_ANON =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxuY2xvYndtZmt4dGlicW54Z2lwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNjkzNzAsImV4cCI6MjA5ODk0NTM3MH0.9NJZP0Emp3u4BCtT0NiQxpmy7GLH5xZBg3zIvfkClLA";
 
 function looksLikeUrl(v: string): boolean {
   return /^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(v);
