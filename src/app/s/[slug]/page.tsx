@@ -13,7 +13,7 @@ export default async function PublicShare({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ err?: string }>;
+  searchParams: Promise<{ err?: string; folder?: string }>;
 }) {
   const { slug } = await params;
   const { err } = await searchParams;
@@ -50,13 +50,28 @@ export default async function PublicShare({
     () => {}
   );
 
-  const { data: assets } = await db
+  // Drive projects browse by folder; other kinds show every file flat.
+  const isDrive = share.project.kind === "drive";
+  const currentFolder = isDrive ? (await searchParams).folder ?? null : undefined;
+
+  const folders = isDrive
+    ? (
+        await db
+          .from("folders")
+          .select("id, parent_id, name")
+          .eq("project_id", share.project.id)
+          .order("name")
+      ).data ?? []
+    : [];
+
+  let assetsQ = db
     .from("assets")
     .select("id, filename, mime, size_bytes, position, created_at")
     .eq("project_id", share.project.id)
-    .is("version_of", null)
-    .order("position")
-    .order("created_at");
+    .is("version_of", null);
+  if (currentFolder === null) assetsQ = assetsQ.is("folder_id", null);
+  else if (typeof currentFolder === "string") assetsQ = assetsQ.eq("folder_id", currentFolder);
+  const { data: assets } = await assetsQ.order("position").order("created_at");
 
   const { data: rends } = await db
     .from("renditions")
@@ -67,11 +82,23 @@ export default async function PublicShare({
   const thumbBy = new Map<string, string>();
   for (const r of rends ?? []) if (r.kind === "thumb" || !thumbBy.has(r.asset_id)) thumbBy.set(r.asset_id, r.kind);
 
+  // Breadcrumb + subfolders for drive navigation.
+  const folderById = new Map(folders.map((f) => [f.id, f]));
+  const crumbs: { id: string; name: string }[] = [];
+  let walk = currentFolder ? folderById.get(currentFolder) : undefined;
+  while (walk) {
+    crumbs.unshift({ id: walk.id, name: walk.name });
+    walk = walk.parent_id ? folderById.get(walk.parent_id) : undefined;
+  }
+  const subfolders = folders.filter((f) => (f.parent_id ?? null) === (currentFolder ?? null));
+
   return (
     <Shell title={share.project.title} subtitle={share.project.description}>
       <ShareView
         slug={slug}
         allowDownloads={share.link.allow_downloads}
+        crumbs={crumbs}
+        subfolders={subfolders.map((f) => ({ id: f.id, name: f.name }))}
         assets={(assets ?? []).map((a) => ({
           id: a.id,
           filename: a.filename,

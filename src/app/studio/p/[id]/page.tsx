@@ -2,11 +2,18 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getActor } from "@/lib/authz";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { projectAssetsWithThumbs } from "@/lib/deliveries";
+import { projectAssetsWithThumbs, projectFolders } from "@/lib/deliveries";
 import { MultipartUploader } from "@/components/MultipartUploader";
 import { CopyButton } from "@/components/CopyButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { setPublished, deleteAsset, createShareLink, revokeShareLink } from "@/app/studio/actions";
+import {
+  setPublished,
+  deleteAsset,
+  createShareLink,
+  revokeShareLink,
+  createFolder,
+  deleteFolder,
+} from "@/app/studio/actions";
 import { KIND_META, type ProjectKind } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +25,13 @@ function fmtBytes(n: number) {
   return `${(n / 1024 ** i).toFixed(i ? 1 : 0)} ${u[i]}`;
 }
 
-export default async function ProjectDetail({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProjectDetail({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ folder?: string }>;
+}) {
   const actor = await getActor();
   if (!actor || actor.role === "client") redirect("/studio");
   const { id } = await params;
@@ -31,8 +44,14 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
     .maybeSingle();
   if (!project) notFound();
 
-  const [assets, { data: links }] = await Promise.all([
-    projectAssetsWithThumbs(id),
+  const isDrive = project.kind === "drive";
+  const isReview = project.kind === "review";
+  const currentFolder = isDrive ? (await searchParams).folder ?? null : undefined;
+
+  const [assets, folders, { data: links }] = await Promise.all([
+    // drive scopes to the current folder; other kinds show every asset
+    projectAssetsWithThumbs(id, currentFolder),
+    isDrive ? projectFolders(id) : Promise.resolve([]),
     admin
       .from("share_links")
       .select("id, slug, label, password_hash, expires_at, allow_downloads, max_downloads, download_count, view_count, revoked_at")
@@ -41,8 +60,17 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
   ]);
 
   const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const isReview = project.kind === "review";
   const activeLinks = (links ?? []).filter((l) => !l.revoked_at);
+
+  // Breadcrumb + subfolders for drive navigation.
+  const folderById = new Map(folders.map((f) => [f.id, f]));
+  const crumbs: { id: string; name: string }[] = [];
+  let walk = currentFolder ? folderById.get(currentFolder) : undefined;
+  while (walk) {
+    crumbs.unshift({ id: walk.id, name: walk.name });
+    walk = walk.parent_id ? folderById.get(walk.parent_id) : undefined;
+  }
+  const subfolders = folders.filter((f) => (f.parent_id ?? null) === (currentFolder ?? null));
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">
@@ -66,10 +94,43 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
+      {/* Drive folder navigation */}
+      {isDrive && (
+        <section className="mt-8">
+          <nav className="flex flex-wrap items-center gap-1 text-sm">
+            <Link href={`/studio/p/${id}`} className="text-neutral-500 hover:text-neutral-900">Home</Link>
+            {crumbs.map((c) => (
+              <span key={c.id}>
+                <span className="text-neutral-300"> / </span>
+                <Link href={`/studio/p/${id}?folder=${c.id}`} className="text-neutral-500 hover:text-neutral-900">{c.name}</Link>
+              </span>
+            ))}
+          </nav>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {subfolders.map((f) => (
+              <span key={f.id} className="flex items-center rounded-md border bg-white">
+                <Link href={`/studio/p/${id}?folder=${f.id}`} className="px-3 py-1.5 text-sm hover:underline">📁 {f.name}</Link>
+                <form action={deleteFolder} className="pr-1.5">
+                  <input type="hidden" name="id" value={f.id} />
+                  <input type="hidden" name="projectId" value={id} />
+                  <ConfirmButton message={`Delete folder "${f.name}" and everything inside?`} className="px-1 text-xs text-neutral-400 hover:text-red-600">✕</ConfirmButton>
+                </form>
+              </span>
+            ))}
+            <form action={createFolder} className="flex items-center gap-1">
+              <input type="hidden" name="projectId" value={id} />
+              <input type="hidden" name="parentId" value={currentFolder ?? ""} />
+              <input name="name" placeholder="New folder" className="w-32 rounded-md border px-2 py-1.5 text-sm" />
+              <button className="rounded-md border px-2 py-1.5 text-xs">Add</button>
+            </form>
+          </div>
+        </section>
+      )}
+
       {/* Upload */}
       <section className="mt-8">
-        <h2 className="mb-2 text-sm font-medium">Upload</h2>
-        <MultipartUploader projectId={id} label="Drop media or files of any size" />
+        <h2 className="mb-2 text-sm font-medium">Upload{isDrive && crumbs.length ? ` to ${crumbs[crumbs.length - 1].name}` : ""}</h2>
+        <MultipartUploader projectId={id} folderId={currentFolder ?? null} label="Drop media or files of any size" />
       </section>
 
       {/* Assets */}

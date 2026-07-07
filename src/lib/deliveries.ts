@@ -37,16 +37,35 @@ export async function visibleProjects(actor: Actor) {
   return data ?? [];
 }
 
-/** Assets of a project with their poster/thumb rendition keys, if any. */
-export async function projectAssetsWithThumbs(projectId: string) {
-  const admin = supabaseAdmin();
-  const { data: assets } = await admin
-    .from("assets")
-    .select("id, filename, mime, size_bytes, width, height, duration_s, position, created_at")
+/** Folders of a project (for drive-style navigation). */
+export async function projectFolders(projectId: string) {
+  const { data } = await supabaseAdmin()
+    .from("folders")
+    .select("id, parent_id, name")
     .eq("project_id", projectId)
-    .is("version_of", null)
-    .order("position")
-    .order("created_at");
+    .order("name");
+  return data ?? [];
+}
+
+/**
+ * Assets of a project with their poster/thumb rendition keys, if any.
+ * Pass `folderId` (a folder uuid, or null for the project root) to scope to one
+ * folder; omit it (undefined) to return every asset in the project.
+ */
+export async function projectAssetsWithThumbs(
+  projectId: string,
+  folderId?: string | null
+) {
+  const admin = supabaseAdmin();
+  let q = admin
+    .from("assets")
+    .select("id, folder_id, filename, mime, size_bytes, width, height, duration_s, position, created_at")
+    .eq("project_id", projectId)
+    .is("version_of", null);
+  if (folderId === null) q = q.is("folder_id", null); // project root only
+  else if (typeof folderId === "string") q = q.eq("folder_id", folderId);
+  // folderId === undefined → no folder filter (every asset)
+  const { data: assets } = await q.order("position").order("created_at");
   if (!assets?.length) return [];
 
   const { data: rends } = await admin

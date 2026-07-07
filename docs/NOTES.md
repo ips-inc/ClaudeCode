@@ -170,3 +170,20 @@ Closed the two things between "code-complete" and "actually usable":
   fast in `main()` instead. Worker media/subtitles: 6/6 without any DB env.
 - Sandbox quirk: backgrounding moto sometimes kills the shell (signal 16) and Postgres won't run
   here — doesn't affect the code; the e2e proof stands from a clean run.
+
+## 2026-07-06 (later) — "finish the build" round 3: folders + CI
+
+- **Drive folders (was half-wired):** schema + uploader already carried `folder_id`, but no UI
+  created or navigated folders, so `drive` projects were flat. Wired it end to end:
+  - `createFolder`/`deleteFolder` server actions (delete purges the whole subtree's storage keys).
+  - `lib/deliveries.ts`: `projectFolders()` + folder-scoped `projectAssetsWithThumbs(id, folderId)`
+    (undefined = all, null = root, uuid = that folder).
+  - Studio project detail: breadcrumb + subfolder chips + create-folder + upload-into-current-folder
+    for `drive` kind (other kinds stay flat).
+  - Public share `/s/[slug]` + `ShareView`: folder breadcrumb + subfolder navigation for `drive`.
+  - **Verified live:** folder scoping returns root=1 / folder=1 / all=2 (rolled back).
+- **CI (`.github/workflows/ci.yml`):** two jobs — web (npm ci → typecheck → build → tests, moto for
+  S3 tests) and worker (apt ffmpeg → pip deps → unittest, moto for S3). Runs the exact checks used
+  by hand so the build stays green on every push. (Security SQL suites run via
+  `supabase/tests/run.sh` against a real project — they need the Supabase stack, so out of CI.)
+- All four project kinds now fully functional: gallery, review, transfer, drive.

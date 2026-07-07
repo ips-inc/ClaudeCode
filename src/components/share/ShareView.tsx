@@ -25,18 +25,50 @@ export function ShareView({
   slug,
   assets,
   allowDownloads,
+  crumbs = [],
+  subfolders = [],
 }: {
   slug: string;
   assets: ShareAsset[];
   allowDownloads: boolean;
+  crumbs?: { id: string; name: string }[];
+  subfolders?: { id: string; name: string }[];
 }) {
   const [lightbox, setLightbox] = useState<ShareAsset | null>(null);
-  if (!assets.length) return <p className="text-center text-sm text-neutral-400">Files are being prepared.</p>;
+  const hasFolders = crumbs.length > 0 || subfolders.length > 0;
 
   const fileUrl = (a: ShareAsset, opts: string) => `/api/share/${slug}/file/${a.id}${opts}`;
+  const folderHref = (id?: string) => (id ? `/s/${slug}?folder=${id}` : `/s/${slug}`);
 
   return (
     <>
+      {hasFolders && (
+        <nav className="mb-4 flex flex-wrap items-center gap-1 text-sm">
+          <a href={folderHref()} className="text-neutral-500 hover:text-neutral-900">Home</a>
+          {crumbs.map((c) => (
+            <span key={c.id}>
+              <span className="text-neutral-300"> / </span>
+              <a href={folderHref(c.id)} className="text-neutral-500 hover:text-neutral-900">{c.name}</a>
+            </span>
+          ))}
+        </nav>
+      )}
+
+      {subfolders.length > 0 && (
+        <ul className="mb-4 flex flex-wrap gap-2">
+          {subfolders.map((f) => (
+            <li key={f.id}>
+              <a href={folderHref(f.id)} className="inline-block rounded-md border bg-white px-3 py-2 text-sm hover:shadow-sm">📁 {f.name}</a>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {assets.length === 0 && !hasFolders ? (
+        <p className="text-center text-sm text-neutral-400">Files are being prepared.</p>
+      ) : assets.length === 0 ? (
+        <p className="text-sm text-neutral-400">This folder is empty.</p>
+      ) : (
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {assets.map((a) => (
           <li key={a.id} className="overflow-hidden rounded-lg border">
@@ -66,6 +98,7 @@ export function ShareView({
           </li>
         ))}
       </ul>
+      )}
 
       {lightbox && (
         <div className="fixed inset-0 z-50 flex flex-col bg-black/90 p-4" onClick={() => setLightbox(null)}>

@@ -112,6 +112,50 @@ export async function createShareLink(formData: FormData) {
   revalidatePath(`/studio/p/${projectId}`);
 }
 
+export async function createFolder(formData: FormData) {
+  await requireOwner();
+  const projectId = String(formData.get("projectId"));
+  const parentId = String(formData.get("parentId") || "") || null;
+  const name = String(formData.get("name") || "").trim().slice(0, 120);
+  if (!name) return;
+  await supabaseAdmin().from("folders").insert({ project_id: projectId, parent_id: parentId, name });
+  revalidatePath(`/studio/p/${projectId}`);
+}
+
+export async function deleteFolder(formData: FormData) {
+  await requireOwner();
+  const id = String(formData.get("id"));
+  const projectId = String(formData.get("projectId"));
+  const admin = supabaseAdmin();
+
+  // Gather this folder's whole subtree, purge storage for assets inside, delete folders.
+  const { data: allFolders } = await admin.from("folders").select("id, parent_id").eq("project_id", projectId);
+  const subtree = new Set<string>([id]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const f of allFolders ?? []) {
+      if (f.parent_id && subtree.has(f.parent_id) && !subtree.has(f.id)) {
+        subtree.add(f.id);
+        grew = true;
+      }
+    }
+  }
+  const { data: assets } = await admin.from("assets").select("id, storage_key").in("folder_id", [...subtree]);
+  const assetIds = (assets ?? []).map((a) => a.id);
+  if (assetIds.length) {
+    const { data: rends } = await admin.from("renditions").select("storage_key").in("asset_id", assetIds);
+    const keys = [
+      ...(assets ?? []).map((a) => a.storage_key),
+      ...(rends ?? []).map((r) => r.storage_key),
+    ].filter(Boolean) as string[];
+    if (keys.length) await deleteObjects(keys);
+    await admin.from("assets").delete().in("id", assetIds);
+  }
+  await admin.from("folders").delete().in("id", [...subtree]);
+  revalidatePath(`/studio/p/${projectId}`);
+}
+
 export async function revokeShareLink(formData: FormData) {
   await requireOwner();
   const id = String(formData.get("id"));

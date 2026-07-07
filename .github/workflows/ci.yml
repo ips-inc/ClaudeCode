@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  web:
+    name: Web app (typecheck · build · tests)
+    runs-on: ubuntu-latest
+    env:
+      # Dummy values so the build/tests don't need real secrets. The S3 tests
+      # target the local moto server; DB is not hit in CI.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: dummy-service-key
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      S3_TEST_ENDPOINT: http://localhost:5001
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Start local S3 (moto) for storage tests
+        run: |
+          pipx install "moto[server]" || pip install "moto[server]"
+          (moto_server -p 5001 &) || (python -m moto.server -p 5001 &)
+          for i in $(seq 1 20); do curl -sf http://localhost:5001/ && break; sleep 0.5; done
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+
+  worker:
+    name: Pipeline worker (ffmpeg · tests)
+    runs-on: ubuntu-latest
+    env:
+      S3_TEST_ENDPOINT: http://localhost:5001
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install worker test deps
+        run: pip install boto3 requests "moto[server]"
+      - name: Start local S3 (moto)
+        run: |
+          (python -m moto.server -p 5001 &)
+          for i in $(seq 1 20); do curl -sf http://localhost:5001/ && break; sleep 0.5; done
+      - name: Run worker tests
+        working-directory: worker
+        run: python -m unittest discover -s tests -v
