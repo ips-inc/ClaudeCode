@@ -7,7 +7,7 @@ export function SignOutButton() {
   const router = useRouter();
   return (
     <button
-      className="microlabel cursor-pointer hover:text-(--color-ink)"
+      className="kicker cursor-pointer hover:[color:var(--color-ink)]"
       onClick={async () => {
         await supabaseBrowser().auth.signOut();
         router.replace("/studio/login");

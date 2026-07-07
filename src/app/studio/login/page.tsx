@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { Wordmark } from "@/components/brand/Wordmark";
 
 function LoginForm() {
   const router = useRouter();
@@ -16,8 +17,7 @@ function LoginForm() {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const supabase = supabaseBrowser();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabaseBrowser().auth.signInWithPassword({ email, password });
     if (error) {
       setError(error.message);
       setBusy(false);
@@ -28,10 +28,11 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={submit} className="w-full max-w-sm space-y-4">
+    <form onSubmit={submit} className="w-full max-w-[320px] space-y-3">
       <label className="block space-y-1.5">
-        <span className="microlabel">Email</span>
+        <span className="kicker">Email</span>
         <input
+          className="field"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -40,8 +41,9 @@ function LoginForm() {
         />
       </label>
       <label className="block space-y-1.5">
-        <span className="microlabel">Password</span>
+        <span className="kicker">Password</span>
         <input
+          className="field"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -49,9 +51,11 @@ function LoginForm() {
           required
         />
       </label>
-      {error && <p className="text-sm text-(--color-danger)">{error}</p>}
-      <button className="btn w-full" disabled={busy}>
-        {busy ? "Signing in…" : "Enter Studio"}
+      {error && (
+        <p className="text-[13px] [color:var(--color-danger)]">{error}</p>
+      )}
+      <button className="btn btn-accent w-full" disabled={busy}>
+        {busy ? "Signing in…" : "Enter studio"}
       </button>
     </form>
   );
@@ -59,14 +63,21 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-10 px-6">
-      <div className="text-center">
-        <h1 className="display text-4xl">ISAAC POOLE</h1>
-        <p className="microlabel mt-3">Studio</p>
+    <main className="relative flex min-h-screen flex-col items-center justify-center gap-10 overflow-hidden px-6">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[60vh] w-[60vw] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50 blur-[120px]"
+        style={{ background: "radial-gradient(closest-side, rgba(10,132,255,0.16), transparent)" }}
+      />
+      <div className="relative z-10 flex flex-col items-center gap-2 text-center">
+        <Wordmark href={null as unknown as string} size="lg" />
+        <p className="kicker mt-3">Studio</p>
       </div>
-      <Suspense>
-        <LoginForm />
-      </Suspense>
+      <div className="relative z-10">
+        <Suspense>
+          <LoginForm />
+        </Suspense>
+      </div>
     </main>
   );
 }
