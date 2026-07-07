@@ -6,6 +6,9 @@ import { projectAssetsWithThumbs, projectFolders } from "@/lib/deliveries";
 import { MultipartUploader } from "@/components/MultipartUploader";
 import { CopyButton } from "@/components/CopyButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { TagEditor } from "@/components/studio/TagEditor";
+import { allTags, assetTagsMap } from "@/lib/tags";
+import { tagChipStyle } from "@/lib/tag-colors";
 import {
   setPublished,
   deleteAsset,
@@ -30,11 +33,12 @@ export default async function ProjectDetail({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ folder?: string }>;
+  searchParams: Promise<{ folder?: string; tag?: string }>;
 }) {
   const actor = await getActor();
   if (!actor || actor.role === "client") redirect("/studio");
   const { id } = await params;
+  const sp = await searchParams;
   const admin = await supabaseServer();
 
   const { data: project } = await admin
@@ -46,9 +50,9 @@ export default async function ProjectDetail({
 
   const isDrive = project.kind === "drive";
   const isReview = project.kind === "review";
-  const currentFolder = isDrive ? (await searchParams).folder ?? null : undefined;
+  const currentFolder = isDrive ? sp.folder ?? null : undefined;
 
-  const [assets, folders, { data: links }] = await Promise.all([
+  const [allAssets, folders, { data: links }] = await Promise.all([
     // drive scopes to the current folder; other kinds show every asset
     projectAssetsWithThumbs(id, currentFolder),
     isDrive ? projectFolders(id) : Promise.resolve([]),
@@ -58,6 +62,18 @@ export default async function ProjectDetail({
       .eq("project_id", id)
       .order("created_at", { ascending: false }),
   ]);
+
+  // Tags: the studio vocabulary + this batch's applied tags, plus an optional
+  // filter (?tag=<id>) narrowing the grid to assets carrying that tag.
+  const [vocabulary, tagsByAsset] = await Promise.all([
+    allTags(),
+    assetTagsMap(allAssets.map((a) => a.id)),
+  ]);
+  const activeTagId = sp.tag ?? null;
+  const assets = activeTagId
+    ? allAssets.filter((a) => (tagsByAsset.get(a.id) ?? []).some((t) => t.id === activeTagId))
+    : allAssets;
+  const activeTag = activeTagId ? vocabulary.find((t) => t.id === activeTagId) ?? null : null;
 
   const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const activeLinks = (links ?? []).filter((l) => !l.revoked_at);
@@ -135,9 +151,31 @@ export default async function ProjectDetail({
 
         {/* Assets */}
         <section className="mt-10">
-          <h2 className="kicker mb-3">Files · {assets.length}</h2>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <h2 className="kicker">Files · {assets.length}{activeTag ? ` of ${allAssets.length}` : ""}</h2>
+            {vocabulary.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1">
+                {vocabulary.map((t) => {
+                  const on = t.id === activeTagId;
+                  const base = `/studio/p/${id}${currentFolder ? `?folder=${currentFolder}&` : "?"}`;
+                  return (
+                    <Link
+                      key={t.id}
+                      href={on ? `/studio/p/${id}${currentFolder ? `?folder=${currentFolder}` : ""}` : `${base}tag=${t.id}`}
+                      className="rounded-full border px-2 py-0.5 text-[10.5px] font-medium transition-opacity"
+                      style={{ ...tagChipStyle(t.color), opacity: activeTagId && !on ? 0.4 : 1 }}
+                    >
+                      {on ? `✓ ${t.label}` : t.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           {assets.length === 0 ? (
-            <p className="text-[13px] [color:var(--color-mute)]">Nothing uploaded yet.</p>
+            <p className="text-[13px] [color:var(--color-mute)]">
+              {activeTag ? "No files with this tag." : "Nothing uploaded yet."}
+            </p>
           ) : (
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {assets.map((a) => (
@@ -153,6 +191,14 @@ export default async function ProjectDetail({
                   <div className="p-2.5">
                     <p className="truncate text-[12.5px] font-medium" title={a.filename}>{a.filename}</p>
                     <p className="mono text-[10.5px] [color:var(--color-mute)]">{fmtBytes(a.size_bytes)}</p>
+                    <div className="mt-2">
+                      <TagEditor
+                        assetId={a.id}
+                        projectId={id}
+                        tags={tagsByAsset.get(a.id) ?? []}
+                        vocabulary={vocabulary}
+                      />
+                    </div>
                     <div className="mt-2 flex items-center gap-1.5">
                       {isReview && a.mime.startsWith("video/") && (
                         <Link href={`/studio/p/${id}/a/${a.id}`} className="btn btn-ghost btn-xs">Review</Link>
