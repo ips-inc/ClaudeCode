@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getActor } from "@/lib/authz";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 import { createClient } from "@/app/studio/actions";
 import { StudioHeader } from "@/components/studio/StudioHeader";
 import { KIND_META, type ProjectKind } from "@/lib/types";
@@ -13,10 +13,10 @@ export default async function StudioDashboard() {
   if (!actor) redirect("/studio/login?next=/studio");
   if (actor.role === "client") redirect("/deliver");
 
-  const admin = supabaseAdmin();
+  const db = await supabaseServer();
   const [{ data: clients }, { data: projects }] = await Promise.all([
-    admin.from("clients").select("id, name").is("archived_at", null).order("name"),
-    admin
+    db.from("clients").select("id, name").is("archived_at", null).order("name"),
+    db
       .from("projects")
       .select("id, title, kind, published, client_id, cover_asset_id, created_at")
       .is("archived_at", null)

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getActor, canAccessProject } from "@/lib/authz";
 import { projectAssetsWithThumbs } from "@/lib/deliveries";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 import { DeliveryGallery } from "@/components/deliver/DeliveryGallery";
 import { AuditLog } from "@/components/deliver/AuditLog";
 
@@ -20,7 +20,7 @@ export default async function DeliveryPage({
   // Authorization first — foreign/unpublished projects 404 with no oracle.
   if (!(await canAccessProject(actor, projectId))) notFound();
 
-  const admin = supabaseAdmin();
+  const admin = await supabaseServer();
   const { data: project } = await admin
     .from("projects")
     .select("id, title, description, kind, published, clients(name)")

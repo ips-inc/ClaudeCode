@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActor, canAccessProject, canWriteProject, audit } from "@/lib/authz";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 async function loadComment(commentId: string) {
-  const admin = supabaseAdmin();
-  const { data: comment } = await admin
+  const db = await supabaseServer();
+  const { data: comment } = await db
     .from("comments")
     .select("id, asset_id, author_id, resolved_at")
     .eq("id", commentId)
     .maybeSingle();
   if (!comment) return null;
-  const { data: asset } = await admin
+  const { data: asset } = await db
     .from("assets")
     .select("project_id")
     .eq("id", comment.asset_id)
@@ -38,7 +38,7 @@ export async function PATCH(
 
   const body = await request.json().catch(() => ({}));
   const resolved = Boolean(body?.resolved);
-  const { error } = await supabaseAdmin()
+  const { error } = await (await supabaseServer())
     .from("comments")
     .update({ resolved_at: resolved ? new Date().toISOString() : null })
     .eq("id", commentId);
@@ -72,7 +72,7 @@ export async function DELETE(
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const { error } = await supabaseAdmin().from("comments").delete().eq("id", commentId);
+  const { error } = await (await supabaseServer()).from("comments").delete().eq("id", commentId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

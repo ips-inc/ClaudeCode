@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getActor, getAuthorizedAsset } from "@/lib/authz";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseServer } from "@/lib/supabase/server";
 import { presignGet } from "@/lib/s3";
 import { FrameReview, type ReviewComment } from "@/components/review/FrameReview";
 import { StudioHeader } from "@/components/studio/StudioHeader";
@@ -20,7 +20,7 @@ export default async function ReviewPage({
   const asset = await getAuthorizedAsset(actor, assetId);
   if (!asset || asset.project_id !== id) notFound();
 
-  const admin = supabaseAdmin();
+  const admin = await supabaseServer();
   const [{ data: rends }, { data: comments }] = await Promise.all([
     admin.from("renditions").select("kind, storage_key").eq("asset_id", assetId).eq("status", "done"),
     admin
