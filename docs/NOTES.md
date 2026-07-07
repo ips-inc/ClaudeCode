@@ -130,3 +130,23 @@ binary available via `pip install imageio-ffmpeg`) · python3.11 present.
 - **Status: all six milestones code-complete and verified to the extent the sandbox allows.**
   Remaining before real use = deploy: Vercel (app) + Railway (worker) + R2/MinIO creds + rotate the
   service key that was pasted in chat + create client users. See docs/DEPLOY.md.
+
+## 2026-07-06 (later) — "finish the build": owner studio + public share on new schema
+
+The legacy `/studio` and `/s` pages were single-tenant Poole-Studio leftovers (referenced dropped
+columns). Replaced with the multi-tenant surface so the whole system operates end to end:
+- **Owner studio (new schema):** `/studio` (clients + projects + add-client), `/studio/new`
+  (client+kind+title), `/studio/p/[id]` (publish toggle, uploader, asset grid, share-link
+  create/revoke), `/studio/p/[id]/a/[assetId]` (wires the video into `FrameReview` with proxy +
+  poster + VTT captions). New owner-guarded server actions in `studio/actions.ts`.
+- **MultipartUploader** — drives `/api/upload/{start,part,complete}` (R2 multipart, 64MiB chunks,
+  per-part retry, 2-wide concurrency). Replaces the old TUS→Supabase-Storage uploader.
+- **Public share on new schema:** rewrote `src/lib/share.ts` (resolve + password cookie + audit),
+  `/s/[slug]` (locked/expired/ok states, counted view), `components/share/ShareView.tsx` (gallery +
+  lightbox), `/api/share/[slug]/file/[assetId]` (rendition/inline/download, `share_consume_download`
+  enforces cap+allow, audited). Deleted the old zip/view routes + old share views + preview mocks +
+  dead components.
+- **Verified:** clean `next build` (12 routes), app tests 18 pass / 1 skip, and a live end-to-end
+  SQL check of the exact share embed + view + download-consume path (rolled back). The two security
+  suites (isolation 13/13, share 8/8) still pass.
+- **Build is functionally complete.** Only deploy wiring remains (docs/DEPLOY.md).

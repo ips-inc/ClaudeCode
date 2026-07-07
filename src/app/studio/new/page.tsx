@@ -1,53 +1,68 @@
+import { redirect } from "next/navigation";
+import { getActor } from "@/lib/authz";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createProject } from "@/app/studio/actions";
 import { KIND_META, type ProjectKind } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 const KINDS: ProjectKind[] = ["gallery", "review", "transfer", "drive"];
 
-export default async function NewProject({
-  searchParams,
-}: {
-  searchParams: Promise<{ kind?: string }>;
-}) {
-  const { kind } = await searchParams;
-  const initial = KINDS.includes(kind as ProjectKind)
-    ? (kind as ProjectKind)
-    : "gallery";
+export default async function NewProject() {
+  const actor = await getActor();
+  if (!actor || actor.role === "client") redirect("/studio");
+
+  const { data: clients } = await supabaseAdmin()
+    .from("clients")
+    .select("id, name")
+    .is("archived_at", null)
+    .order("name");
+
+  if (!clients?.length) {
+    return (
+      <div className="mx-auto max-w-md px-6 py-16 text-center">
+        <p className="text-sm text-neutral-500">Create a client first, then start a project for them.</p>
+        <a href="/studio" className="mt-4 inline-block text-sm underline">← Back to studio</a>
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-xl">
-      <p className="microlabel mb-2">Create</p>
-      <h1 className="display mb-8 text-4xl">New project</h1>
-      <form action={createProject} className="space-y-6">
-        <fieldset className="space-y-2">
-          <legend className="microlabel mb-2">Type</legend>
-          {KINDS.map((k) => (
-            <label
-              key={k}
-              className="flex cursor-pointer items-baseline gap-3 border hairline bg-white px-4 py-3 has-checked:border-(--color-ink)"
-            >
-              <input
-                type="radio"
-                name="kind"
-                value={k}
-                defaultChecked={k === initial}
-                className="translate-y-px"
-              />
-              <span className="font-medium">{KIND_META[k].label}</span>
-              <span className="ml-auto text-right text-xs text-(--color-stone)">
-                {KIND_META[k].blurb}
-              </span>
-            </label>
-          ))}
+    <div className="mx-auto max-w-lg px-6 py-12">
+      <h1 className="mb-6 text-2xl font-medium">New project</h1>
+      <form action={createProject} className="space-y-5">
+        <label className="block">
+          <span className="text-xs uppercase tracking-widest text-neutral-400">Client</span>
+          <select name="clientId" required className="mt-1 w-full rounded-md border px-3 py-2 text-sm">
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </label>
+
+        <fieldset>
+          <span className="text-xs uppercase tracking-widest text-neutral-400">Type</span>
+          <div className="mt-1 space-y-2">
+            {KINDS.map((k, i) => (
+              <label key={k} className="flex cursor-pointer items-center gap-3 rounded-md border p-2.5 text-sm has-checked:border-neutral-900">
+                <input type="radio" name="kind" value={k} defaultChecked={i === 0} />
+                <span className="font-medium">{KIND_META[k].label}</span>
+                <span className="ml-auto text-xs text-neutral-400">replaces {KIND_META[k].replaces}</span>
+              </label>
+            ))}
+          </div>
         </fieldset>
-        <label className="block space-y-1.5">
-          <span className="microlabel">Title</span>
-          <input name="title" type="text" required placeholder="Smith Wedding — Selects" />
+
+        <label className="block">
+          <span className="text-xs uppercase tracking-widest text-neutral-400">Title</span>
+          <input name="title" required placeholder="Spring Campaign — Selects" className="mt-1 w-full rounded-md border px-3 py-2 text-sm" />
         </label>
-        <label className="block space-y-1.5">
-          <span className="microlabel">Description (optional)</span>
-          <textarea name="description" rows={3} />
+        <label className="block">
+          <span className="text-xs uppercase tracking-widest text-neutral-400">Description (optional)</span>
+          <textarea name="description" rows={3} className="mt-1 w-full rounded-md border px-3 py-2 text-sm" />
         </label>
-        <button className="btn">Create project</button>
+
+        <button className="rounded-md bg-neutral-900 px-4 py-2 text-sm text-white">Create project</button>
       </form>
     </div>
   );

@@ -1,108 +1,87 @@
 import Link from "next/link";
-import { supabaseServer } from "@/lib/supabase/server";
-import { KIND_META, type Project, type ProjectKind } from "@/lib/types";
-import { formatDate } from "@/lib/format";
+import { redirect } from "next/navigation";
+import { getActor } from "@/lib/authz";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { createClient } from "@/app/studio/actions";
+import { KIND_META, type ProjectKind } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const KINDS: ProjectKind[] = ["gallery", "review", "transfer", "drive"];
+export default async function StudioDashboard() {
+  const actor = await getActor();
+  if (!actor) redirect("/studio/login?next=/studio");
+  if (actor.role === "client") redirect("/deliver");
 
-export default async function Dashboard() {
-  const supabase = await supabaseServer();
-  const [{ data: projects }, { data: activity }] = await Promise.all([
-    supabase
+  const admin = supabaseAdmin();
+  const [{ data: clients }, { data: projects }] = await Promise.all([
+    admin.from("clients").select("id, name").is("archived_at", null).order("name"),
+    admin
       .from("projects")
-      .select("*")
+      .select("id, title, kind, published, client_id, created_at")
       .is("archived_at", null)
-      .order("updated_at", { ascending: false }),
-    supabase
-      .from("activity")
-      .select("*, projects(title), share_links(label, slug)")
-      .order("created_at", { ascending: false })
-      .limit(12),
+      .order("created_at", { ascending: false }),
   ]);
 
-  const byKind = new Map<ProjectKind, Project[]>();
-  for (const kind of KINDS) byKind.set(kind, []);
-  for (const p of (projects ?? []) as Project[]) byKind.get(p.kind)?.push(p);
+  const byClient = new Map<string, typeof projects>();
+  for (const p of projects ?? []) {
+    const arr = byClient.get(p.client_id) ?? [];
+    arr.push(p);
+    byClient.set(p.client_id, arr);
+  }
 
   return (
-    <div className="space-y-14">
-      <div className="flex items-end justify-between">
+    <div className="mx-auto max-w-5xl px-6 py-10">
+      <div className="mb-8 flex items-end justify-between">
         <div>
-          <p className="microlabel mb-2">Overview</p>
-          <h1 className="display text-4xl">Projects</h1>
+          <p className="text-xs uppercase tracking-widest text-neutral-400">Studio</p>
+          <h1 className="mt-1 text-2xl font-medium">Clients & projects</h1>
         </div>
-        <Link href="/studio/new" className="btn">
+        <Link href="/studio/new" className="rounded-md bg-neutral-900 px-4 py-2 text-sm text-white">
           New project
         </Link>
       </div>
 
-      {KINDS.map((kind) => {
-        const list = byKind.get(kind)!;
-        return (
-          <section key={kind}>
-            <div className="mb-4 flex items-baseline justify-between border-b hairline pb-2">
-              <h2 className="microlabel">
-                {KIND_META[kind].label}s{" "}
-                <span className="normal-case tracking-normal text-(--color-hairline)">
-                  · replaces {KIND_META[kind].replaces}
-                </span>
-              </h2>
-              <Link href={`/studio/new?kind=${kind}`} className="microlabel hover:text-(--color-ink)">
-                + New
-              </Link>
-            </div>
-            {list.length === 0 ? (
-              <p className="text-sm text-(--color-stone)">
-                {KIND_META[kind].blurb}. None yet.
-              </p>
-            ) : (
-              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {list.map((p) => (
+      {(clients ?? []).length === 0 ? (
+        <p className="mb-8 text-sm text-neutral-500">No clients yet. Create one to begin.</p>
+      ) : (
+        <div className="space-y-8">
+          {(clients ?? []).map((c) => (
+            <section key={c.id}>
+              <h2 className="mb-3 border-b pb-1.5 text-sm font-medium">{c.name}</h2>
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {(byClient.get(c.id) ?? []).map((p) => (
                   <li key={p.id}>
-                    <Link
-                      href={`/studio/p/${p.id}`}
-                      className="block border hairline bg-white px-4 py-3 transition-colors hover:border-(--color-ink)"
-                    >
-                      <p className="truncate font-medium">{p.title}</p>
-                      <p className="mt-1 text-xs text-(--color-stone)">
-                        Updated {formatDate(p.updated_at)}
-                      </p>
+                    <Link href={`/studio/p/${p.id}`} className="block rounded-lg border p-3 transition hover:shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="truncate font-medium">{p.title}</span>
+                        <span className={`ml-2 shrink-0 rounded px-1.5 py-0.5 text-[10px] uppercase ${p.published ? "bg-emerald-100 text-emerald-700" : "bg-neutral-100 text-neutral-500"}`}>
+                          {p.published ? "live" : "draft"}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-neutral-400">{KIND_META[p.kind as ProjectKind].replaces}</p>
                     </Link>
                   </li>
                 ))}
+                {(byClient.get(c.id) ?? []).length === 0 && (
+                  <li className="text-xs text-neutral-400">No projects.</li>
+                )}
               </ul>
-            )}
-          </section>
-        );
-      })}
+            </section>
+          ))}
+        </div>
+      )}
 
-      <section>
-        <h2 className="microlabel mb-4 border-b hairline pb-2">Recent activity</h2>
-        {!activity?.length ? (
-          <p className="text-sm text-(--color-stone)">
-            Views, downloads, comments and favorites from your share links will
-            appear here.
-          </p>
-        ) : (
-          <ul className="space-y-2 text-sm">
-            {activity.map((a) => (
-              <li key={a.id} className="flex items-baseline gap-3">
-                <span className="microlabel w-20 shrink-0">{a.event}</span>
-                <span className="truncate">
-                  {(a.projects as { title?: string } | null)?.title ?? "—"}
-                  {a.meta && typeof a.meta === "object" && "filename" in a.meta
-                    ? ` · ${(a.meta as { filename?: string }).filename}`
-                    : ""}
-                </span>
-                <span className="ml-auto shrink-0 text-xs text-(--color-stone)">
-                  {formatDate(a.created_at)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+      <section className="mt-12 max-w-sm">
+        <h2 className="mb-2 text-sm font-medium">Add a client</h2>
+        <form action={createClient} className="flex gap-2">
+          <input
+            name="name"
+            placeholder="Client or brand name"
+            required
+            className="flex-1 rounded-md border px-3 py-2 text-sm"
+          />
+          <button className="rounded-md border px-3 py-2 text-sm hover:bg-neutral-900 hover:text-white">Add</button>
+        </form>
       </section>
     </div>
   );
