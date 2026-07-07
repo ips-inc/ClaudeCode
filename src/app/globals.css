@@ -45,6 +45,33 @@
 }
 
 @layer base {
+  /*
+    Global theme. Dark is the default (the @theme tokens above). When the app
+    resolves to light — either the viewer chose it or their system prefers it —
+    a concrete data-theme="light" is stamped on <html> by the no-flash script,
+    and these overrides take over. Client-delivery galleries opt into the fixed
+    light "gallery" surface separately via .surface-light.
+  */
+  :root {
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --color-bg: #fbfbfd;
+    --color-surface: #ffffff;
+    --color-surface-2: #f2f2f5;
+    --color-elevated: #ffffff;
+    --color-ink: #0a0a0b;
+    --color-dim: #57575c;
+    --color-mute: #86868b;
+    --color-faint: #b0b0b6;
+    --color-hairline: rgba(0, 0, 0, 0.08);
+    --color-line: rgba(0, 0, 0, 0.13);
+    --color-line-strong: rgba(0, 0, 0, 0.22);
+    --color-accent: #0071e3; /* Apple blue reads better on white */
+    --color-accent-press: #0060df;
+  }
+
   * {
     border-color: var(--color-hairline);
   }

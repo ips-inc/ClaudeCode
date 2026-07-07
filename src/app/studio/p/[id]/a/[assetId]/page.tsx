@@ -4,7 +4,6 @@ import { getActor, getAuthorizedAsset } from "@/lib/authz";
 import { supabaseServer } from "@/lib/supabase/server";
 import { presignGet } from "@/lib/s3";
 import { FrameReview, type ReviewComment } from "@/components/review/FrameReview";
-import { StudioHeader } from "@/components/studio/StudioHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -51,9 +50,7 @@ export default async function ReviewPage({
   if (!src) notFound();
 
   return (
-    <>
-      <StudioHeader />
-      <div className="mx-auto max-w-6xl px-6 py-8">
+    <div className="mx-auto max-w-6xl px-6 py-8">
         <Link href={`/studio/p/${id}`} className="kicker hover:[color:var(--color-ink)]">← Back to project</Link>
         <h1 className="display mt-3 mb-6 text-2xl">{asset.filename}</h1>
         {byKind.get("proxy") ? null : (
@@ -70,7 +67,6 @@ export default async function ReviewPage({
           canResolve={actor.role !== "client"}
           initialComments={(comments ?? []) as ReviewComment[]}
         />
-      </div>
-    </>
+    </div>
   );
 }

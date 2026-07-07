@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getActor } from "@/lib/authz";
 import { supabaseServer } from "@/lib/supabase/server";
 import { createProject } from "@/app/studio/actions";
-import { StudioHeader } from "@/components/studio/StudioHeader";
 import { KIND_META, type ProjectKind } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -21,20 +20,15 @@ export default async function NewProject() {
 
   if (!clients?.length) {
     return (
-      <>
-        <StudioHeader />
-        <div className="mx-auto max-w-md px-6 py-24 text-center">
-          <p className="text-[14px] [color:var(--color-dim)]">Create a client first, then start a project for them.</p>
-          <a href="/studio" className="btn btn-ghost btn-sm mt-5">← Back to studio</a>
-        </div>
-      </>
+      <div className="mx-auto max-w-md px-6 py-24 text-center">
+        <p className="text-[14px] [color:var(--color-dim)]">Create a client first, then start a project for them.</p>
+        <a href="/studio/files" className="btn btn-ghost btn-sm mt-5">← Back to files</a>
+      </div>
     );
   }
 
   return (
-    <>
-      <StudioHeader />
-      <div className="mx-auto max-w-lg px-6 py-14">
+    <div className="mx-auto max-w-lg px-6 py-14">
         <p className="kicker mb-2">Create</p>
         <h1 className="display mb-8 text-4xl">New project</h1>
         <form action={createProject} className="space-y-6">
@@ -69,7 +63,6 @@ export default async function NewProject() {
 
           <button className="btn btn-accent">Create project</button>
         </form>
-      </div>
-    </>
+    </div>
   );
 }
