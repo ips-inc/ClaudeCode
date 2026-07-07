@@ -6,7 +6,6 @@ import { projectAssetsWithThumbs, projectFolders } from "@/lib/deliveries";
 import { MultipartUploader } from "@/components/MultipartUploader";
 import { CopyButton } from "@/components/CopyButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { StudioHeader } from "@/components/studio/StudioHeader";
 import {
   setPublished,
   deleteAsset,
@@ -74,10 +73,8 @@ export default async function ProjectDetail({
   const subfolders = folders.filter((f) => (f.parent_id ?? null) === (currentFolder ?? null));
 
   return (
-    <>
-      <StudioHeader />
-      <div className="mx-auto max-w-5xl px-6 py-10">
-        <Link href="/studio" className="kicker hover:[color:var(--color-ink)]">← Studio</Link>
+    <div className="mx-auto max-w-5xl px-6 py-10">
+        <Link href="/studio/files" className="kicker hover:[color:var(--color-ink)]">← Files</Link>
         <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="display text-3xl">{project.title}</h1>
@@ -209,7 +206,6 @@ export default async function ProjectDetail({
             <div className="sm:col-span-2"><button className="btn btn-accent btn-sm">Create link</button></div>
           </form>
         </section>
-      </div>
-    </>
+    </div>
   );
 }
