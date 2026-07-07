@@ -180,16 +180,24 @@ export default async function ProjectDetail({
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {assets.map((a) => (
                 <li key={a.id} className="card lift overflow-hidden">
-                  <div className="flex aspect-square items-center justify-center bg-[color:var(--color-surface-2)]">
+                  <Link
+                    href={`/studio/p/${id}/a/${a.id}`}
+                    className="relative flex aspect-square items-center justify-center bg-[color:var(--color-surface-2)]"
+                  >
                     {a.thumbKind ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={`/api/media/${a.id}?r=${a.thumbKind}`} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <span className="kicker px-2 text-center">{a.mime.split("/")[1] ?? "file"}</span>
                     )}
-                  </div>
+                    {a.mime.startsWith("video/") && (
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-[13px] text-white">▶</span>
+                      </span>
+                    )}
+                  </Link>
                   <div className="p-2.5">
-                    <p className="truncate text-[12.5px] font-medium" title={a.filename}>{a.filename}</p>
+                    <Link href={`/studio/p/${id}/a/${a.id}`} className="block truncate text-[12.5px] font-medium hover:[color:var(--color-accent)]" title={a.filename}>{a.filename}</Link>
                     <p className="mono text-[10.5px] [color:var(--color-mute)]">{fmtBytes(a.size_bytes)}</p>
                     <div className="mt-2">
                       <TagEditor
@@ -200,9 +208,9 @@ export default async function ProjectDetail({
                       />
                     </div>
                     <div className="mt-2 flex items-center gap-1.5">
-                      {isReview && a.mime.startsWith("video/") && (
-                        <Link href={`/studio/p/${id}/a/${a.id}`} className="btn btn-ghost btn-xs">Review</Link>
-                      )}
+                      <Link href={`/studio/p/${id}/a/${a.id}`} className="btn btn-ghost btn-xs">
+                        {isReview && a.mime.startsWith("video/") ? "Review" : "Open"}
+                      </Link>
                       <form action={deleteAsset}>
                         <input type="hidden" name="id" value={a.id} />
                         <input type="hidden" name="projectId" value={id} />
