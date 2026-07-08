@@ -3,7 +3,6 @@ import { getActor, canWriteProject, audit } from "@/lib/authz";
 import { completeMultipart, presignGet } from "@/lib/s3";
 import { sniff } from "@/lib/filetype";
 import { supabaseServer } from "@/lib/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
@@ -48,6 +47,7 @@ export async function POST(request: NextRequest) {
   // Server-side type validation: read the leading bytes of the real object.
   let mime = asset.mime;
   let category = "other";
+  let sniffed = false;
   try {
     const url = await presignGet(asset.storage_key, { ttl: 120 });
     const head = await fetch(url, { headers: { range: "bytes=0-63" } });
@@ -56,23 +56,21 @@ export async function POST(request: NextRequest) {
       const result = sniff(buf, asset.mime);
       mime = result.mime;
       category = result.category;
+      sniffed = true;
     }
   } catch {
-    // Sniff failure leaves the declared type but keeps scan pending.
+    // Sniff failure: keep the declared type but record that no scan ran.
   }
 
   await db
     .from("assets")
-    .update({ mime, scan_status: "clean" })
+    .update({ mime, scan_status: sniffed ? "clean" : "skipped" })
     .eq("id", assetId);
 
-  // Queue media pipeline work. The jobs table is worker-owned (RLS is
-  // select-only for members), so enqueue with the service role.
+  // Queue media pipeline work via a SECURITY DEFINER RPC — write access is
+  // re-checked in the DB, and no service-role key is needed from the web app.
   if (category === "video" || category === "audio") {
-    await supabaseAdmin().from("jobs").insert([
-      { asset_id: assetId, type: "transcode" },
-      { asset_id: assetId, type: "transcribe" },
-    ]);
+    await db.rpc("enqueue_media_jobs", { p_asset: assetId });
   }
 
   await audit({

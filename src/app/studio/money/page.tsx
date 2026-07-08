@@ -32,7 +32,7 @@ function StatusChip({ status, overdue }: { status: FinanceStatus; overdue?: bool
 export default async function MoneyHome() {
   const actor = await getActor();
   if (!actor) redirect("/studio/login?next=/studio/money");
-  if (actor.role === "client") redirect("/deliver");
+  if (actor.role !== "owner") redirect(actor.role === "client" ? "/deliver" : "/studio");
 
   const [ar, docs] = await Promise.all([arSummary(), listDocs()]);
 

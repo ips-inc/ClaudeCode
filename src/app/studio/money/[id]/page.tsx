@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 
 export default async function FinanceDocDetail({ params }: { params: Promise<{ id: string }> }) {
   const actor = await getActor();
-  if (!actor || actor.role === "client") redirect("/studio/money");
+  if (!actor || actor.role !== "owner") redirect("/studio");
   const { id } = await params;
   const found = await getDoc(id);
   if (!found) notFound();

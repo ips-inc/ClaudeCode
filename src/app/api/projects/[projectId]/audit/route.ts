@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActor, canWriteProject } from "@/lib/authz";
 import { supabaseServer } from "@/lib/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
@@ -23,20 +22,21 @@ export async function GET(
   }
 
   const limit = Math.min(500, Number(request.nextUrl.searchParams.get("limit") ?? 200));
-  const { data: rows } = await (await supabaseServer())
+  const db = await supabaseServer();
+  const { data: rows } = await db
     .from("audit_log")
     .select("id, action, object_type, object_id, actor_id, share_link_id, ip, user_agent, meta, created_at")
     .eq("project_id", projectId)
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  // Resolve actor emails in one lookup. Profiles are self-read under RLS, so
-  // reading other members' emails needs the service role — best-effort, and
-  // the log falls back to "member" if it's unavailable.
+  // Resolve actor emails in one lookup, through the session: the owner reads
+  // all profiles under RLS; a collaborator only resolves themselves and the
+  // rest fall back to "member". No service key involved.
   const actorIds = [...new Set((rows ?? []).map((r) => r.actor_id).filter(Boolean))];
   const emailById = new Map<string, string>();
   if (actorIds.length) {
-    const { data: profiles } = await supabaseAdmin()
+    const { data: profiles } = await db
       .from("profiles")
       .select("id, email")
       .in("id", actorIds as string[]);

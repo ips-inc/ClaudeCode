@@ -13,7 +13,7 @@ export default async function NewFinanceDoc({
   searchParams: Promise<{ kind?: string }>;
 }) {
   const actor = await getActor();
-  if (!actor || actor.role === "client") redirect("/studio/money");
+  if (!actor || actor.role !== "owner") redirect("/studio");
   const kind: FinanceKind = (await searchParams).kind === "invoice" ? "invoice" : "estimate";
 
   const { data: clients } = await (await supabaseServer())

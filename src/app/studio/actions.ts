@@ -8,15 +8,18 @@ import { deleteObjects } from "@/lib/s3";
 import { projectSlug, shareSlug } from "@/lib/slug";
 import type { ProjectKind } from "@/lib/types";
 
-/** Owner-only guard for studio mutations. */
-async function requireOwner() {
+/**
+ * Guard for studio mutations: owner or collaborator (never a client). RLS is
+ * the real enforcement — collaborators only reach their own clients' rows.
+ */
+async function requireMember() {
   const actor = await getActor();
   if (!actor || actor.role === "client") throw new Error("Forbidden");
   return actor;
 }
 
 export async function createClient(formData: FormData) {
-  await requireOwner();
+  await requireMember();
   const name = String(formData.get("name") || "").trim();
   if (!name) throw new Error("Name required");
   const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 40) || "client"}-${shareSlug().slice(0, 6)}`;
@@ -26,7 +29,7 @@ export async function createClient(formData: FormData) {
 }
 
 export async function createProject(formData: FormData) {
-  const actor = await requireOwner();
+  const actor = await requireMember();
   const clientId = String(formData.get("clientId") || "");
   const kind = String(formData.get("kind")) as ProjectKind;
   const title = String(formData.get("title") || "").trim();
@@ -51,7 +54,7 @@ export async function createProject(formData: FormData) {
 }
 
 export async function setPublished(formData: FormData) {
-  await requireOwner();
+  await requireMember();
   const id = String(formData.get("id"));
   const published = formData.get("published") === "true";
   await (await supabaseServer()).from("projects").update({ published }).eq("id", id);
@@ -59,7 +62,7 @@ export async function setPublished(formData: FormData) {
 }
 
 export async function updateProject(formData: FormData) {
-  await requireOwner();
+  await requireMember();
   const id = String(formData.get("id"));
   const title = String(formData.get("title") || "").trim();
   const description = String(formData.get("description") || "").trim() || null;
@@ -68,7 +71,7 @@ export async function updateProject(formData: FormData) {
 }
 
 export async function setCover(formData: FormData) {
-  await requireOwner();
+  await requireMember();
   const projectId = String(formData.get("projectId"));
   const assetId = String(formData.get("assetId"));
   await (await supabaseServer()).from("projects").update({ cover_asset_id: assetId }).eq("id", projectId);
@@ -76,7 +79,7 @@ export async function setCover(formData: FormData) {
 }
 
 export async function deleteAsset(formData: FormData) {
-  await requireOwner();
+  await requireMember();
   const id = String(formData.get("id"));
   const projectId = String(formData.get("projectId"));
   const admin = await supabaseServer();
@@ -91,16 +94,28 @@ export async function deleteAsset(formData: FormData) {
 
 /** Move an asset into a folder (empty string = project root). */
 export async function moveAsset(formData: FormData) {
-  await requireOwner();
+  await requireMember();
   const assetId = String(formData.get("assetId"));
   const projectId = String(formData.get("projectId"));
   const folderId = String(formData.get("folderId") || "") || null;
-  await (await supabaseServer()).from("assets").update({ folder_id: folderId }).eq("id", assetId);
+  const db = await supabaseServer();
+  // The destination folder must belong to the same project — the FK alone
+  // would happily point an asset at another project's folder.
+  if (folderId) {
+    const { data: folder } = await db
+      .from("folders")
+      .select("id")
+      .eq("id", folderId)
+      .eq("project_id", projectId)
+      .maybeSingle();
+    if (!folder) throw new Error("Folder not in this project");
+  }
+  await db.from("assets").update({ folder_id: folderId }).eq("id", assetId).eq("project_id", projectId);
   revalidatePath(`/studio/p/${projectId}`);
 }
 
 export async function createShareLink(formData: FormData) {
-  const actor = await requireOwner();
+  const actor = await requireMember();
   const projectId = String(formData.get("projectId"));
   const label = String(formData.get("label") || "").trim() || null;
   const password = String(formData.get("password") || "");
@@ -130,17 +145,28 @@ export async function createShareLink(formData: FormData) {
 }
 
 export async function createFolder(formData: FormData) {
-  await requireOwner();
+  await requireMember();
   const projectId = String(formData.get("projectId"));
   const parentId = String(formData.get("parentId") || "") || null;
   const name = String(formData.get("name") || "").trim().slice(0, 120);
   if (!name) return;
-  await (await supabaseServer()).from("folders").insert({ project_id: projectId, parent_id: parentId, name });
+  const db = await supabaseServer();
+  // A parent folder from another project would detach the subtree.
+  if (parentId) {
+    const { data: parent } = await db
+      .from("folders")
+      .select("id")
+      .eq("id", parentId)
+      .eq("project_id", projectId)
+      .maybeSingle();
+    if (!parent) throw new Error("Parent folder not in this project");
+  }
+  await db.from("folders").insert({ project_id: projectId, parent_id: parentId, name });
   revalidatePath(`/studio/p/${projectId}`);
 }
 
 export async function deleteFolder(formData: FormData) {
-  await requireOwner();
+  await requireMember();
   const id = String(formData.get("id"));
   const projectId = String(formData.get("projectId"));
   const admin = await supabaseServer();
@@ -174,7 +200,7 @@ export async function deleteFolder(formData: FormData) {
 }
 
 export async function revokeShareLink(formData: FormData) {
-  await requireOwner();
+  await requireMember();
   const id = String(formData.get("id"));
   const projectId = String(formData.get("projectId"));
   await (await supabaseServer()).from("share_links").update({ revoked_at: new Date().toISOString() }).eq("id", id);
