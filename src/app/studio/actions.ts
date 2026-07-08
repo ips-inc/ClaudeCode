@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import bcrypt from "bcryptjs";
 import { getActor } from "@/lib/authz";
 import { supabaseServer } from "@/lib/supabase/server";
 import { deleteObjects } from "@/lib/s3";
@@ -97,12 +96,20 @@ export async function createShareLink(formData: FormData) {
   const password = String(formData.get("password") || "");
   const expiresAt = String(formData.get("expiresAt") || "");
   const maxDownloads = String(formData.get("maxDownloads") || "");
+  const db = await supabaseServer();
 
-  const { error } = await (await supabaseServer()).from("share_links").insert({
+  // Hash via pgcrypto so it matches how share_unlock verifies (bcrypt in the DB).
+  let passwordHash: string | null = null;
+  if (password) {
+    const { data } = await db.rpc("share_hash_password", { p_password: password });
+    passwordHash = (data as string) ?? null;
+  }
+
+  const { error } = await db.from("share_links").insert({
     project_id: projectId,
     slug: shareSlug(),
     label,
-    password_hash: password ? await bcrypt.hash(password, 10) : null,
+    password_hash: passwordHash,
     expires_at: expiresAt ? new Date(`${expiresAt}T23:59:59`).toISOString() : null,
     max_downloads: maxDownloads ? Number(maxDownloads) : null,
     allow_downloads: formData.get("allowDownloads") === "on",

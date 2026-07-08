@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveShare, auditShare } from "@/lib/share";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseAnon } from "@/lib/supabase/anon";
 import { presignGet } from "@/lib/s3";
 import { isDangerousInline } from "@/lib/filetype";
 
@@ -25,41 +25,29 @@ export async function GET(
     return NextResponse.json({ error: share.status }, { status: 403 });
   }
 
-  const db = supabaseAdmin();
-  const { data: asset } = await db
-    .from("assets")
-    .select("id, project_id, filename, mime, storage_key")
-    .eq("id", assetId)
-    .eq("project_id", share.project.id) // scope to the link's project
-    .maybeSingle();
-  if (!asset) return NextResponse.json({ error: "not_found" }, { status: 404 });
-
+  const db = supabaseAnon();
   const renditionKind = request.nextUrl.searchParams.get("r");
   const wantsDownload = request.nextUrl.searchParams.get("dl") === "1";
 
-  let key = asset.storage_key;
-  let mime = asset.mime;
+  // Resolve the file via the gateway: scoped to the link's project, live-checked.
+  const { data: fileRows } = await db.rpc("share_file", {
+    p_link_id: share.linkId,
+    p_asset_id: assetId,
+    p_rendition: renditionKind,
+  });
+  const file = (fileRows as { storage_key: string; mime: string; filename: string }[] | null)?.[0];
+  if (!file) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-  if (renditionKind) {
-    const { data: r } = await db
-      .from("renditions")
-      .select("storage_key, mime")
-      .eq("asset_id", asset.id)
-      .eq("kind", renditionKind)
-      .eq("status", "done")
-      .maybeSingle();
-    if (!r) return NextResponse.json({ error: "not_found" }, { status: 404 });
-    key = r.storage_key;
-    mime = r.mime;
-  }
+  const key = file.storage_key;
+  const mime = file.mime;
 
   if (wantsDownload) {
     // Atomic: enforces allow_downloads + max_downloads + live-ness.
-    const { data: consumed } = await db.rpc("share_consume_download", { link: share.link.id });
+    const { data: consumed } = await db.rpc("share_consume_download", { p_link: share.linkId });
     if (!consumed) {
       return NextResponse.json({ error: "download_unavailable" }, { status: 403 });
     }
-    await auditShare(share.project.id, share.link.id, "download", { filename: asset.filename }, {
+    await auditShare(share.linkId, "download", { filename: file.filename }, {
       ip: request.headers.get("x-forwarded-for"),
       ua: request.headers.get("user-agent"),
     });
@@ -68,7 +56,7 @@ export async function GET(
   const forceDownload = wantsDownload || isDangerousInline(mime);
   const url = await presignGet(key, {
     ttl: 900,
-    download: forceDownload ? asset.filename : false,
+    download: forceDownload ? file.filename : false,
     contentType: forceDownload ? "application/octet-stream" : mime,
   });
   if (!url) return NextResponse.json({ error: "storage" }, { status: 500 });

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { resolveShare, auditShare } from "@/lib/share";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { supabaseAnon } from "@/lib/supabase/anon";
 import { unlockShare } from "@/app/s/[slug]/actions";
 import { ShareView } from "@/components/share/ShareView";
 
@@ -44,9 +44,9 @@ export default async function PublicShare({
   }
 
   // Live link — register a counted view, then render.
-  const db = supabaseAdmin();
-  await db.rpc("share_register_view", { link: share.link.id }, { get: false }).then(
-    () => auditShare(share.project.id, share.link.id, "view"),
+  const db = supabaseAnon();
+  await db.rpc("share_register_view", { p_link: share.linkId }).then(
+    () => auditShare(share.linkId, "view"),
     () => {}
   );
 
@@ -55,32 +55,25 @@ export default async function PublicShare({
   const currentFolder = isDrive ? (await searchParams).folder ?? null : undefined;
 
   const folders = isDrive
-    ? (
-        await db
-          .from("folders")
-          .select("id, parent_id, name")
-          .eq("project_id", share.project.id)
-          .order("name")
-      ).data ?? []
+    ? ((await db.rpc("share_folders", { p_link_id: share.linkId })).data ?? []) as {
+        id: string;
+        parent_id: string | null;
+        name: string;
+      }[]
     : [];
 
-  let assetsQ = db
-    .from("assets")
-    .select("id, filename, mime, size_bytes, position, created_at")
-    .eq("project_id", share.project.id)
-    .is("version_of", null);
-  if (currentFolder === null) assetsQ = assetsQ.is("folder_id", null);
-  else if (typeof currentFolder === "string") assetsQ = assetsQ.eq("folder_id", currentFolder);
-  const { data: assets } = await assetsQ.order("position").order("created_at");
-
-  const { data: rends } = await db
-    .from("renditions")
-    .select("asset_id, kind")
-    .in("asset_id", (assets ?? []).map((a) => a.id).length ? (assets ?? []).map((a) => a.id) : ["00000000-0000-0000-0000-000000000000"])
-    .in("kind", ["thumb", "poster"])
-    .eq("status", "done");
-  const thumbBy = new Map<string, string>();
-  for (const r of rends ?? []) if (r.kind === "thumb" || !thumbBy.has(r.asset_id)) thumbBy.set(r.asset_id, r.kind);
+  const { data: assetRows } = await db.rpc("share_list_assets", {
+    p_link_id: share.linkId,
+    p_folder: currentFolder ?? null,
+    p_by_folder: isDrive,
+  });
+  const assets = (assetRows ?? []) as {
+    id: string;
+    filename: string;
+    mime: string;
+    size_bytes: number;
+    thumb_kind: string | null;
+  }[];
 
   // Breadcrumb + subfolders for drive navigation.
   const folderById = new Map(folders.map((f) => [f.id, f]));
@@ -96,15 +89,15 @@ export default async function PublicShare({
     <Shell title={share.project.title} subtitle={share.project.description}>
       <ShareView
         slug={slug}
-        allowDownloads={share.link.allow_downloads}
+        allowDownloads={share.allowDownloads}
         crumbs={crumbs}
         subfolders={subfolders.map((f) => ({ id: f.id, name: f.name }))}
-        assets={(assets ?? []).map((a) => ({
+        assets={assets.map((a) => ({
           id: a.id,
           filename: a.filename,
           mime: a.mime,
           size_bytes: a.size_bytes,
-          thumbKind: thumbBy.get(a.id) ?? null,
+          thumbKind: a.thumb_kind,
         }))}
       />
     </Shell>
