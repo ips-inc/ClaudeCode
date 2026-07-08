@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getActor } from "@/lib/authz";
 import { supabaseServer } from "@/lib/supabase/server";
 import { formatBytes } from "@/lib/format";
+import { arSummary, money } from "@/lib/finance";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export default async function TheDesk() {
   if (actor.role === "client") redirect("/deliver");
 
   const db = await supabaseServer();
+  const ar = await arSummary();
   const [{ data: projects }, { data: recent }, { data: sizes }] = await Promise.all([
     db
       .from("projects")
@@ -55,7 +57,12 @@ export default async function TheDesk() {
     { label: "Active projects", value: String(allProjects.length), href: "/studio/files" },
     { label: "Live with clients", value: String(live.length), href: "/deliver" },
     { label: "Storage used", value: formatBytes(totalBytes), href: "/studio/files" },
-    { label: "Invoices due", value: "—", href: "/studio/money", hint: "Set up" },
+    {
+      label: "Outstanding",
+      value: money(ar.outstanding),
+      href: "/studio/money",
+      hint: ar.overdue > 0 ? `${money(ar.overdue)} overdue` : undefined,
+    },
   ];
 
   return (
