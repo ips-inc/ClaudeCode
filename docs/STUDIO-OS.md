@@ -1,63 +1,49 @@
 # Studio OS — the plan
 
-The system is no longer a client-delivery app. It's the operating system for
-Isaac Poole Studio — one login, role-gated, four worlds. This doc is the
-reference for what we're building and in what order.
+The system is the operating system for Isaac Poole Studio — one login,
+role-gated, four worlds. This doc tracks what's built and what's left.
 
 ## The four worlds
 
 ### 1. The Desk (home) — `/studio`
-The command center the team lands on. Live signals: active projects, storage
-used, what's live with clients, recent uploads, and (once Money is wired)
-invoices due / overdue. Fast paths back into the work.
+✅ Command center: greeting, live tiles (active projects, storage used, live
+deliveries, **outstanding AR + overdue**), recent uploads, live-with-clients.
 
 ### 2. Files — a 1:1 Frame.io — `/studio/files`, `/studio/p/[id]`
-The daily driver and file-management home. Where all work is dropped and where
-outside editors/collaborators are brought in.
-
 - ✅ Projects grouped by client
-- ✅ **Tags + custom tags** (studio-wide vocabulary, colors, per-file, filter)
-- ✅ **Open any file** — images, video (frame-accurate review), everything else
-- ✅ Large-file multipart upload (any size, any type)
-- ⏳ In-project search + sort + list/grid view
-- ⏳ Folders across all project kinds + move-between-folders
-- ⏳ Per-project collaborator invites (outside editors) — needs email/auth flow
-- ⏳ Versions / stacks (v1, v2 of the same cut)
+- ✅ **Tags + custom tags** (studio vocabulary, colors, per-file, filter)
+- ✅ **Open any file** — images, video review, everything else
+- ✅ Large-file multipart upload (any size), drag-drop
+- ✅ In-project **search + sort**
+- ✅ **Collaborators** — outside editors added per client (`/studio/team`)
+- ⏳ Move files between folders; bulk select/tag/delete
+- ⏳ Versions / stacks
+- ⏳ Brand-new-user email invites (needs email/invite setup)
 
-### 3. Deliver (client-facing) — `/deliver`
-Clean galleries for final image/video handoff. Password / expiry / download
-controls. The only surface clients see. Lives apart from the hub home.
+### 3. Deliver (client-facing) — `/deliver`, `/s/[slug]`
+- ✅ Galleries, access log, and **public share links** — now served through an
+  anonymous RPC gateway, no service-role key needed (this was the "share links
+  don't work" fix; passwords verified in-DB, links re-checked on every call).
 
-- ✅ Galleries, share links, access log
-- ⚠️ **Public share links need the `service_role` key repasted in Vercel**
-  (the paste got corrupted). Everything authenticated already runs on the
-  session + RLS, so this only affects unauthenticated `/s/...` links.
-
-### 4. Money (accountant-grade, owner-only) — `/studio/money`
-Estimates → client accepts/declines → invoice → payment → **Zoho Books sync**.
-
-- ✅ Scaffolded: AR tiles + the estimate→invoice→pay→sync flow laid out
-- ⏳ Real wiring. Needs, from Isaac:
-  - Payment rails. Client ask: **easy to pay — card, ACH, wire, Zelle.**
-    Plan: **Stripe** for card + ACH (hosted invoice, accept/decline estimate);
-    **wire & Zelle** shown as mark-as-paid with auto-generated instructions on
-    the same invoice. (`pay.isaacpoole.co` can front this if we learn its stack.)
-  - **Zoho Books** OAuth app + tokens in the app env so the deployed site can
-    read/write invoices at runtime (the MCP is a build-time tool, not runtime).
+### 4. Money (accountant) — `/studio/money`, client at `/i/[id]`
+- ✅ Estimates & invoices with line items, live totals, per-kind numbering
+- ✅ Real AR dashboard: outstanding / overdue / awaiting approval / paid 30d
+- ✅ Send, record payments (card/ACH/wire/Zelle/check), mark paid, convert
+      approved estimate → invoice
+- ✅ Client view: approve/decline an estimate, see amount due + how-to-pay
+- ⏳ **Online card/ACH payment** (needs a Stripe connection)
+- ⏳ **Zoho Books sync** (needs Zoho OAuth creds in the app env — the MCP is a
+      build-time tool, the deployed app needs its own credentials)
 
 ## Cross-cutting
-- ✅ **Dark / light theme**, follows system by default, toggle in the rail
-- ✅ Auth on the session + **RLS** everywhere (service role only where there's
-  no session: public share, worker jobs, best-effort audit)
+- ✅ **Dark / light theme**, follows system, toggle in the rail
+- ✅ Auth on the session + **RLS** everywhere; service role only where there's
+      truly no session (now just the worker jobs queue + best-effort audit)
 - Roles: owner, collaborator (team/outside editor), client
 
-## MVP cut (agreed order)
-1. ✅ **Foundation** — shell, The Desk, theme, Money scaffold
-2. 🔨 **Files = Frame 1:1** — the first deep module (in progress)
-3. **Money** — once payment rails + Zoho creds are decided/connected
-4. Polish + collaborator invites
+## What still needs Isaac
+1. **Stripe** connection → online card/ACH pay + hosted checkout on invoices
+2. **Zoho Books** OAuth credentials → finance docs sync to Zoho automatically
+3. (Optional) email/invite setup → invite brand-new collaborators by email
 
-## Open items needing Isaac
-- Repaste `SUPABASE_SERVICE_ROLE_KEY` in Vercel → share links work
-- Decide payment processor path (Stripe vs `pay.isaacpoole.co`)
-- Provide Zoho Books OAuth credentials for runtime sync
+Everything else in the original brief is built and deployed.
