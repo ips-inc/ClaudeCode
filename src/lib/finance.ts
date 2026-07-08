@@ -27,6 +27,8 @@ export interface FinanceDoc {
   approved_at: string | null;
   declined_at: string | null;
   paid_at: string | null;
+  zoho_id: string | null;
+  zoho_synced_at: string | null;
   created_at: string;
   clients?: { name: string } | null;
 }
@@ -66,7 +68,7 @@ export function isOverdue(d: FinanceDoc): boolean {
 }
 
 const DOC_COLS =
-  "id, kind, number, client_id, project_id, status, currency, issue_date, due_date, notes, terms, subtotal, tax_rate, tax, total, amount_paid, sent_at, viewed_at, approved_at, declined_at, paid_at, created_at, clients(name)";
+  "id, kind, number, client_id, project_id, status, currency, issue_date, due_date, notes, terms, subtotal, tax_rate, tax, total, amount_paid, sent_at, viewed_at, approved_at, declined_at, paid_at, zoho_id, zoho_synced_at, created_at, clients(name)";
 
 export async function listDocs(kind?: FinanceKind): Promise<FinanceDoc[]> {
   const db = await supabaseServer();

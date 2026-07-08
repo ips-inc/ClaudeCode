@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getActor } from "@/lib/authz";
 import { supabaseServer } from "@/lib/supabase/server";
+import { zohoConfigured, syncDocToZoho } from "@/lib/zoho";
 import type { FinanceKind } from "@/lib/finance";
 
 async function requireMember() {
@@ -109,6 +110,22 @@ export async function sendDoc(formData: FormData) {
     .update({ status: "sent", sent_at: new Date().toISOString() })
     .eq("id", docId)
     .eq("status", "draft");
+  // Mirror into Zoho Books when configured — best-effort, never blocks the send.
+  if (zohoConfigured()) {
+    try {
+      await syncDocToZoho(docId);
+    } catch {
+      // surfaced separately via the manual sync button
+    }
+  }
+  revalidatePath(`/studio/money/${docId}`);
+}
+
+/** Manually (re)sync a doc to Zoho Books. */
+export async function syncZoho(formData: FormData) {
+  await requireMember();
+  const docId = String(formData.get("docId"));
+  await syncDocToZoho(docId);
   revalidatePath(`/studio/money/${docId}`);
 }
 
