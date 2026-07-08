@@ -45,5 +45,8 @@ deliveries, **outstanding AR + overdue**), recent uploads, live-with-clients.
 1. **Stripe** connection → online card/ACH pay + hosted checkout on invoices
 2. **Zoho Books** OAuth credentials → finance docs sync to Zoho automatically
 3. (Optional) email/invite setup → invite brand-new collaborators by email
+4. **R2 lifecycle rule** (Cloudflare dashboard → bucket → Settings → add rule:
+   "Abort incomplete multipart uploads after 7 days"). Abandoned multi-GB
+   uploads otherwise keep billing storage forever — one click prevents it.
 
 Everything else in the original brief is built and deployed.
