@@ -40,6 +40,17 @@ export async function POST(request: NextRequest) {
     .single();
   if (!project) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
+  // Destination folder must belong to this project (FK alone doesn't check).
+  if (folderId) {
+    const { data: folder } = await db
+      .from("folders")
+      .select("id")
+      .eq("id", folderId)
+      .eq("project_id", projectId)
+      .maybeSingle();
+    if (!folder) return NextResponse.json({ error: "bad_folder" }, { status: 400 });
+  }
+
   const assetId = crypto.randomUUID();
   const safeName = filename.replace(/[^\w.\- ()]/g, "_");
   const storageKey = `clients/${project.client_id}/projects/${projectId}/${assetId}/${safeName}`;

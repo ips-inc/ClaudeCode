@@ -38,11 +38,13 @@ export async function createAndAssignTag(
   const db = await supabaseServer();
 
   // Reuse an existing tag with the same label (case-insensitive) rather than
-  // erroring on the unique index; otherwise create it.
+  // erroring on the unique index; otherwise create it. Escape ilike wildcards
+  // so a label like "%" can't pattern-match someone else's tag.
+  const pattern = clean.replace(/[\\%_]/g, "\\$&");
   const { data: existing } = await db
     .from("tags")
     .select("id")
-    .ilike("label", clean)
+    .ilike("label", pattern)
     .maybeSingle();
 
   let tagId = existing?.id;

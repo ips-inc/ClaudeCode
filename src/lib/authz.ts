@@ -1,6 +1,5 @@
 import "server-only";
 import { supabaseServer } from "@/lib/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase/admin";
 
 /**
  * Authorization helpers for authenticated routes.
@@ -61,9 +60,10 @@ export async function getAuthorizedAsset(actor: Actor, assetId: string) {
 }
 
 /**
- * Write an audit row. Best-effort: clients can't insert via RLS and this must
- * never break the request it's logging, so it goes through the service role and
- * swallows failures.
+ * Write an audit row for the signed-in caller. Best-effort — never breaks the
+ * request it's logging. Goes through the audit_event SECURITY DEFINER RPC
+ * (actor = auth.uid(), access re-checked in the DB), so it needs no service
+ * key. Public share events use share_audit instead.
  */
 export async function audit(entry: {
   action: string;
@@ -78,17 +78,14 @@ export async function audit(entry: {
   meta?: Record<string, unknown>;
 }): Promise<void> {
   try {
-    await supabaseAdmin().from("audit_log").insert({
-      action: entry.action,
-      project_id: entry.projectId ?? null,
-      client_id: entry.clientId ?? null,
-      actor_id: entry.actorId ?? null,
-      share_link_id: entry.shareLinkId ?? null,
-      object_type: entry.objectType ?? null,
-      object_id: entry.objectId ?? null,
-      ip: entry.ip ?? null,
-      user_agent: entry.userAgent ?? null,
-      meta: entry.meta ?? {},
+    await (await supabaseServer()).rpc("audit_event", {
+      p_action: entry.action,
+      p_project: entry.projectId ?? null,
+      p_object_type: entry.objectType ?? null,
+      p_object_id: entry.objectId ?? null,
+      p_ip: entry.ip ?? null,
+      p_ua: entry.userAgent ?? null,
+      p_meta: entry.meta ?? {},
     });
   } catch {
     // audit is non-critical; never fail the underlying request

@@ -7,9 +7,10 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { zohoConfigured, syncDocToZoho } from "@/lib/zoho";
 import type { FinanceKind } from "@/lib/finance";
 
-async function requireMember() {
+/** Money is the owner's book — collaborators (outside editors) never touch it. */
+async function requireOwner() {
   const actor = await getActor();
-  if (!actor || actor.role === "client") throw new Error("Forbidden");
+  if (!actor || actor.role !== "owner") throw new Error("Forbidden");
   return actor;
 }
 
@@ -28,7 +29,7 @@ async function recompute(docId: string) {
 }
 
 export async function createDoc(formData: FormData) {
-  const actor = await requireMember();
+  const actor = await requireOwner();
   const kind = String(formData.get("kind") || "estimate") as FinanceKind;
   const clientId = String(formData.get("clientId") || "");
   const dueDate = String(formData.get("dueDate") || "") || null;
@@ -55,13 +56,17 @@ export async function createDoc(formData: FormData) {
 }
 
 export async function addLineItem(formData: FormData) {
-  await requireMember();
+  await requireOwner();
   const docId = String(formData.get("docId"));
   const description = String(formData.get("description") || "").trim();
   const qty = Number(formData.get("qty") || 1) || 1;
   const unitPrice = Number(formData.get("unitPrice") || 0) || 0;
   if (!description) return;
   const db = await supabaseServer();
+  // Line items are immutable once the doc has been sent — what the client saw
+  // is what the books show.
+  const { data: doc } = await db.from("finance_docs").select("status").eq("id", docId).maybeSingle();
+  if (doc?.status !== "draft") throw new Error("Document already sent");
   const { count } = await db
     .from("finance_line_items")
     .select("id", { count: "exact", head: true })
@@ -79,17 +84,19 @@ export async function addLineItem(formData: FormData) {
 }
 
 export async function deleteLineItem(formData: FormData) {
-  await requireMember();
+  await requireOwner();
   const id = String(formData.get("id"));
   const docId = String(formData.get("docId"));
   const db = await supabaseServer();
-  await db.from("finance_line_items").delete().eq("id", id);
+  const { data: doc } = await db.from("finance_docs").select("status").eq("id", docId).maybeSingle();
+  if (doc?.status !== "draft") throw new Error("Document already sent");
+  await db.from("finance_line_items").delete().eq("id", id).eq("doc_id", docId);
   await recompute(docId);
   revalidatePath(`/studio/money/${docId}`);
 }
 
 export async function updateDocMeta(formData: FormData) {
-  await requireMember();
+  await requireOwner();
   const docId = String(formData.get("docId"));
   const dueDate = String(formData.get("dueDate") || "") || null;
   const taxRate = Number(formData.get("taxRate") || 0) || 0;
@@ -102,7 +109,7 @@ export async function updateDocMeta(formData: FormData) {
 }
 
 export async function sendDoc(formData: FormData) {
-  await requireMember();
+  await requireOwner();
   const docId = String(formData.get("docId"));
   const db = await supabaseServer();
   await db
@@ -123,23 +130,28 @@ export async function sendDoc(formData: FormData) {
 
 /** Manually (re)sync a doc to Zoho Books. */
 export async function syncZoho(formData: FormData) {
-  await requireMember();
+  await requireOwner();
   const docId = String(formData.get("docId"));
   await syncDocToZoho(docId);
   revalidatePath(`/studio/money/${docId}`);
 }
 
 export async function recordPayment(formData: FormData) {
-  await requireMember();
+  await requireOwner();
   const docId = String(formData.get("docId"));
   const amount = Number(formData.get("amount") || 0) || 0;
   const method = String(formData.get("method") || "other");
   const reference = String(formData.get("reference") || "").trim() || null;
   if (amount <= 0) return;
   const db = await supabaseServer();
+  const { data: doc } = await db
+    .from("finance_docs")
+    .select("kind, status, total, amount_paid")
+    .eq("id", docId)
+    .maybeSingle();
+  // Payments apply to sent invoices only — estimates and drafts have no balance.
+  if (doc?.kind !== "invoice" || doc.status === "draft") throw new Error("Not a payable invoice");
   await db.from("finance_payments").insert({ doc_id: docId, amount, method, reference });
-
-  const { data: doc } = await db.from("finance_docs").select("total, amount_paid").eq("id", docId).maybeSingle();
   const paid = Number(doc?.amount_paid ?? 0) + amount;
   const fullyPaid = paid >= Number(doc?.total ?? 0) - 0.005;
   await db
@@ -154,20 +166,21 @@ export async function recordPayment(formData: FormData) {
 }
 
 export async function markPaid(formData: FormData) {
-  await requireMember();
+  await requireOwner();
   const docId = String(formData.get("docId"));
   const db = await supabaseServer();
-  const { data: doc } = await db.from("finance_docs").select("total").eq("id", docId).maybeSingle();
+  const { data: doc } = await db.from("finance_docs").select("kind, total").eq("id", docId).maybeSingle();
+  if (doc?.kind !== "invoice") throw new Error("Only invoices can be paid");
   await db
     .from("finance_docs")
-    .update({ status: "paid", amount_paid: Number(doc?.total ?? 0), paid_at: new Date().toISOString() })
+    .update({ status: "paid", amount_paid: Number(doc.total ?? 0), paid_at: new Date().toISOString() })
     .eq("id", docId);
   revalidatePath(`/studio/money/${docId}`);
 }
 
 /** Convert an approved estimate into a fresh invoice, copying its line items. */
 export async function convertToInvoice(formData: FormData) {
-  const actor = await requireMember();
+  const actor = await requireOwner();
   const estimateId = String(formData.get("docId"));
   const db = await supabaseServer();
   const { data: est } = await db
@@ -208,7 +221,7 @@ export async function convertToInvoice(formData: FormData) {
 }
 
 export async function deleteDoc(formData: FormData) {
-  await requireMember();
+  await requireOwner();
   const docId = String(formData.get("docId"));
   await (await supabaseServer()).from("finance_docs").delete().eq("id", docId);
   redirect("/studio/money");
