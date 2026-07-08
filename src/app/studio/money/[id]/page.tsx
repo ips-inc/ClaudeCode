@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getActor } from "@/lib/authz";
 import { getDoc, money, isOverdue } from "@/lib/finance";
+import { zohoConfigured } from "@/lib/zoho";
 import { formatDate } from "@/lib/format";
 import { CopyButton } from "@/components/CopyButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -14,6 +15,7 @@ import {
   markPaid,
   convertToInvoice,
   deleteDoc,
+  syncZoho,
 } from "@/app/studio/money/actions";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +33,7 @@ export default async function FinanceDocDetail({ params }: { params: Promise<{ i
   const balance = Number(doc.total) - Number(doc.amount_paid);
   const isEstimate = doc.kind === "estimate";
   const editable = doc.status === "draft";
+  const zoho = zohoConfigured();
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
@@ -64,6 +67,14 @@ export default async function FinanceDocDetail({ params }: { params: Promise<{ i
               <button className="btn btn-ghost btn-sm">Mark paid</button>
             </form>
           )}
+          {doc.zoho_id ? (
+            <span className="chip !text-[color:var(--color-good)]" title={`Synced ${doc.zoho_synced_at ? formatDate(doc.zoho_synced_at) : ""}`}>✓ Zoho</span>
+          ) : zoho && doc.status !== "draft" ? (
+            <form action={syncZoho}>
+              <input type="hidden" name="docId" value={doc.id} />
+              <button className="btn btn-ghost btn-sm">Sync to Zoho</button>
+            </form>
+          ) : null}
           <form action={deleteDoc}>
             <input type="hidden" name="docId" value={doc.id} />
             <ConfirmButton message={`Delete ${doc.number}?`} className="btn btn-ghost btn-sm !text-[color:var(--color-danger)]">Delete</ConfirmButton>
