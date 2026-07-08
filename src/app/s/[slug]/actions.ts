@@ -2,27 +2,27 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import bcrypt from "bcryptjs";
-import { supabaseAdmin } from "@/lib/supabase/admin";
-import { unlockCookieName, unlockCookieValue } from "@/lib/share";
+import { supabaseAnon } from "@/lib/supabase/anon";
+import { unlockCookieName } from "@/lib/share";
 
-/** Validate a share-link password and set the unlock cookie. */
+/**
+ * Validate a share-link password. On success the RPC returns the link id — the
+ * capability that grants asset access — which we stash in an httpOnly cookie.
+ * The password itself is never stored; verification happens in the database.
+ */
 export async function unlockShare(formData: FormData) {
   const slug = String(formData.get("slug"));
   const password = String(formData.get("password") || "");
 
-  const { data: link } = await supabaseAdmin()
-    .from("share_links")
-    .select("password_hash, revoked_at, expires_at")
-    .eq("slug", slug)
-    .maybeSingle();
+  const { data: linkId } = await supabaseAnon().rpc("share_unlock", {
+    p_slug: slug,
+    p_password: password,
+  });
 
-  if (!link || link.revoked_at) redirect(`/s/${slug}`);
-  const ok = !!link.password_hash && (await bcrypt.compare(password, link.password_hash));
-  if (!ok) redirect(`/s/${slug}?err=1`);
+  if (!linkId) redirect(`/s/${slug}?err=1`);
 
   const jar = await cookies();
-  jar.set(unlockCookieName(slug), await unlockCookieValue(slug), {
+  jar.set(unlockCookieName(slug), String(linkId), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
