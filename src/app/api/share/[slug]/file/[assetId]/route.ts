@@ -35,7 +35,17 @@ export async function GET(
     p_asset_id: assetId,
     p_rendition: renditionKind,
   });
-  const file = (fileRows as { storage_key: string; mime: string; filename: string }[] | null)?.[0];
+  let file = (fileRows as { storage_key: string; mime: string; filename: string }[] | null)?.[0];
+  // A missing playback proxy falls back to the original — the proxy is an
+  // optimization, not an access boundary (same asset, same link check).
+  if (!file && renditionKind === "proxy") {
+    const { data: origRows } = await db.rpc("share_file", {
+      p_link_id: share.linkId,
+      p_asset_id: assetId,
+      p_rendition: null,
+    });
+    file = (origRows as typeof fileRows | null)?.[0];
+  }
   if (!file) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   const key = file.storage_key;
