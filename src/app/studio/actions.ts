@@ -89,6 +89,16 @@ export async function deleteAsset(formData: FormData) {
   revalidatePath(`/studio/p/${projectId}`);
 }
 
+/** Move an asset into a folder (empty string = project root). */
+export async function moveAsset(formData: FormData) {
+  await requireOwner();
+  const assetId = String(formData.get("assetId"));
+  const projectId = String(formData.get("projectId"));
+  const folderId = String(formData.get("folderId") || "") || null;
+  await (await supabaseServer()).from("assets").update({ folder_id: folderId }).eq("id", assetId);
+  revalidatePath(`/studio/p/${projectId}`);
+}
+
 export async function createShareLink(formData: FormData) {
   const actor = await requireOwner();
   const projectId = String(formData.get("projectId"));

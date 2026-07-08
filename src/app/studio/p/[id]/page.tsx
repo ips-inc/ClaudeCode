@@ -7,6 +7,7 @@ import { MultipartUploader } from "@/components/MultipartUploader";
 import { CopyButton } from "@/components/CopyButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { TagEditor } from "@/components/studio/TagEditor";
+import { MoveAssetSelect } from "@/components/studio/MoveAssetSelect";
 import { allTags, assetTagsMap } from "@/lib/tags";
 import { tagChipStyle } from "@/lib/tag-colors";
 import {
@@ -249,6 +250,16 @@ export default async function ProjectDetail({
                         vocabulary={vocabulary}
                       />
                     </div>
+                    {isDrive && folders.length > 0 && (
+                      <div className="mt-2">
+                        <MoveAssetSelect
+                          assetId={a.id}
+                          projectId={id}
+                          folderId={a.folder_id ?? null}
+                          folders={folders.map((f) => ({ id: f.id, name: f.name }))}
+                        />
+                      </div>
+                    )}
                     <div className="mt-2 flex items-center gap-1.5">
                       <Link href={`/studio/p/${id}/a/${a.id}`} className="btn btn-ghost btn-xs">
                         {isReview && a.mime.startsWith("video/") ? "Review" : "Open"}
