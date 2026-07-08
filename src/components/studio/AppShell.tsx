@@ -22,6 +22,7 @@ const NAV: NavItem[] = [
   { href: "/studio/files", label: "Files", icon: "▧", roles: ["owner", "collaborator"], prefix: true },
   { href: "/deliver", label: "Deliver", icon: "❏", roles: ["owner", "collaborator"], prefix: true },
   { href: "/studio/money", label: "Money", icon: "$", roles: ["owner"], prefix: true },
+  { href: "/studio/team", label: "Team", icon: "◎", roles: ["owner"], prefix: true },
 ];
 
 function isActive(pathname: string, item: NavItem) {
