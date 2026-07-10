@@ -43,10 +43,18 @@ export async function GET(
       .eq("kind", renditionKind)
       .eq("status", "done")
       .maybeSingle();
-    if (!rendition) return NextResponse.json({ error: "not_found" }, { status: 404 });
-    key = rendition.storage_key;
-    mime = rendition.mime;
-    filename = `${asset.filename}.${rendition.kind}`;
+    if (rendition) {
+      key = rendition.storage_key;
+      mime = rendition.mime;
+      filename = `${asset.filename}.${rendition.kind}`;
+    } else if (!wantsDownload && (renditionKind === "proxy" || renditionKind === "thumb" || renditionKind === "poster")) {
+      // Worker hasn't produced this rendition yet — fall back to the original so
+      // the grid/player still shows something. Renditions are optimizations, not
+      // access boundaries (same asset, authorization already passed). A
+      // non-renderable original (TIFF/RAW) just won't paint, which is fine.
+    } else {
+      return NextResponse.json({ error: "not_found" }, { status: 404 });
+    }
   }
 
   // Anything that could execute in a browser context is never served inline.

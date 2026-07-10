@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { isBrowserImage } from "@/lib/filetype";
 
 interface DeliveryAsset {
   id: string;
@@ -27,6 +28,13 @@ function formatBytes(n: number): string {
  */
 export function DeliveryGallery({ assets }: { assets: DeliveryAsset[] }) {
   const [lightbox, setLightbox] = useState<DeliveryAsset | null>(null);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setLightbox(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox]);
 
   if (!assets.length) {
     return (
@@ -55,6 +63,9 @@ export function DeliveryGallery({ assets }: { assets: DeliveryAsset[] }) {
                   alt={a.filename}
                   className="h-full w-full object-cover"
                 />
+              ) : isBrowserImage(a.mime) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={`/api/media/${a.id}`} alt={a.filename} loading="lazy" className="h-full w-full object-cover" />
               ) : (
                 <span className="kicker px-2 text-center">{a.mime.split("/")[1] ?? "file"}</span>
               )}
