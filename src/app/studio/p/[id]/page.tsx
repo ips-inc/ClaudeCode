@@ -178,7 +178,7 @@ export default async function ProjectDetail({
               placeholder="Search files…"
               className="field !h-9 w-full max-w-56 text-[13px]"
             />
-            <select name="sort" defaultValue={sort} className="field !h-9 w-auto text-[13px]">
+            <select name="sort" defaultValue={sort} className="field !h-9 !w-auto text-[13px]">
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
               <option value="name">Name (A–Z)</option>
