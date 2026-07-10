@@ -88,10 +88,12 @@ export default async function TheDesk() {
         {stats.map((s) => (
           <Link key={s.label} href={s.href} className="card lift p-5">
             <p className="kicker">{s.label}</p>
-            <p className="mt-2 flex items-baseline gap-2">
-              <span className="display text-3xl">{s.value}</span>
-              {s.hint && <span className="chip !h-5 !px-1.5 text-[10px]">{s.hint}</span>}
-            </p>
+            <p className="mt-2 display text-3xl">{s.value}</p>
+            {s.hint && (
+              <span className="mt-1.5 inline-block whitespace-nowrap text-[11px] font-medium [color:var(--color-danger)]">
+                {s.hint}
+              </span>
+            )}
           </Link>
         ))}
       </div>
