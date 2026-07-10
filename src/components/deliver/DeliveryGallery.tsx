@@ -27,14 +27,27 @@ function formatBytes(n: number): string {
  * download — so the access log is populated by real client activity.
  */
 export function DeliveryGallery({ assets }: { assets: DeliveryAsset[] }) {
-  const [lightbox, setLightbox] = useState<DeliveryAsset | null>(null);
+  const viewable = assets.filter((a) => a.mime.startsWith("image/") || a.mime.startsWith("video/"));
+  const [lightIdx, setLightIdx] = useState<number | null>(null);
+  const lightbox = lightIdx != null ? viewable[lightIdx] ?? null : null;
+
+  const openAsset = (a: DeliveryAsset) => {
+    const i = viewable.findIndex((v) => v.id === a.id);
+    if (i >= 0) setLightIdx(i);
+  };
+  const step = (d: number) =>
+    setLightIdx((i) => (i == null ? i : (i + d + viewable.length) % viewable.length));
 
   useEffect(() => {
-    if (!lightbox) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setLightbox(null);
+    if (lightIdx == null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightIdx(null);
+      else if (e.key === "ArrowRight") step(1);
+      else if (e.key === "ArrowLeft") step(-1);
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [lightbox]);
+  }, [lightIdx, viewable.length]);
 
   if (!assets.length) {
     return (
@@ -53,7 +66,7 @@ export function DeliveryGallery({ assets }: { assets: DeliveryAsset[] }) {
         {assets.map((a) => (
           <li key={a.id} className="card lift group overflow-hidden">
             <button
-              onClick={() => (isImage(a.mime) || isVideo(a.mime)) && setLightbox(a)}
+              onClick={() => (isImage(a.mime) || isVideo(a.mime)) && openAsset(a)}
               className="relative flex aspect-square w-full items-center justify-center bg-[color:var(--color-surface-2)]"
             >
               {a.thumbKind ? (
@@ -95,10 +108,10 @@ export function DeliveryGallery({ assets }: { assets: DeliveryAsset[] }) {
       {lightbox && (
         <div
           className="fixed inset-0 z-50 flex flex-col bg-black/90 p-4"
-          onClick={() => setLightbox(null)}
+          onClick={() => setLightIdx(null)}
         >
           <div className="flex items-center justify-between text-white">
-            <span className="text-sm">{lightbox.filename}</span>
+            <span className="text-sm">{lightbox.filename} <span className="text-white/50">· {(lightIdx ?? 0) + 1} / {viewable.length}</span></span>
             <div className="flex items-center gap-3">
               <a
                 href={`/api/media/${lightbox.id}?dl=1`}
@@ -107,12 +120,18 @@ export function DeliveryGallery({ assets }: { assets: DeliveryAsset[] }) {
               >
                 Download
               </a>
-              <button onClick={() => setLightbox(null)} className="text-2xl leading-none">
+              <button onClick={() => setLightIdx(null)} aria-label="Close preview" className="text-2xl leading-none">
                 ×
               </button>
             </div>
           </div>
-          <div className="flex flex-1 items-center justify-center overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="relative flex flex-1 items-center justify-center overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {viewable.length > 1 && (
+              <>
+                <button onClick={() => step(-1)} aria-label="Previous" className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-white hover:bg-white/20">‹</button>
+                <button onClick={() => step(1)} aria-label="Next" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-white hover:bg-white/20">›</button>
+              </>
+            )}
             {lightbox.mime.startsWith("video/") ? (
               // eslint-disable-next-line jsx-a11y/media-has-caption
               <video src={`/api/media/${lightbox.id}?r=proxy`} controls autoPlay className="max-h-full max-w-full" />
@@ -121,6 +140,7 @@ export function DeliveryGallery({ assets }: { assets: DeliveryAsset[] }) {
               <img src={`/api/media/${lightbox.id}`} alt={lightbox.filename} className="max-h-full max-w-full object-contain" />
             )}
           </div>
+          <p className="pt-2 text-center text-[11px] text-white/40">← → to move · Esc to close</p>
         </div>
       )}
     </>

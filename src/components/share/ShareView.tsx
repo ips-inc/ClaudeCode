@@ -35,16 +35,30 @@ export function ShareView({
   crumbs?: { id: string; name: string }[];
   subfolders?: { id: string; name: string }[];
 }) {
-  const [lightbox, setLightbox] = useState<ShareAsset | null>(null);
+  // The lightbox navigates within the viewable (image/video) assets only.
+  const viewable = assets.filter((a) => a.mime.startsWith("image/") || a.mime.startsWith("video/"));
+  const [lightIdx, setLightIdx] = useState<number | null>(null);
+  const lightbox = lightIdx != null ? viewable[lightIdx] ?? null : null;
   const hasFolders = crumbs.length > 0 || subfolders.length > 0;
 
-  // Esc closes the lightbox — the reflex every viewer expects.
+  const openAsset = (a: ShareAsset) => {
+    const i = viewable.findIndex((v) => v.id === a.id);
+    if (i >= 0) setLightIdx(i);
+  };
+  const step = (d: number) =>
+    setLightIdx((i) => (i == null ? i : (i + d + viewable.length) % viewable.length));
+
+  // Esc closes; ← / → move between files — the reflexes every viewer expects.
   useEffect(() => {
-    if (!lightbox) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setLightbox(null);
+    if (lightIdx == null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightIdx(null);
+      else if (e.key === "ArrowRight") step(1);
+      else if (e.key === "ArrowLeft") step(-1);
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [lightbox]);
+  }, [lightIdx, viewable.length]);
 
   const fileUrl = (a: ShareAsset, opts: string) => `/api/share/${slug}/file/${a.id}${opts}`;
   const folderHref = (id?: string) => (id ? `/s/${slug}?folder=${id}` : `/s/${slug}`);
@@ -82,7 +96,7 @@ export function ShareView({
         {assets.map((a) => (
           <li key={a.id} className="card lift group overflow-hidden">
             <button
-              onClick={() => (a.mime.startsWith("image/") || a.mime.startsWith("video/")) && setLightbox(a)}
+              onClick={() => (a.mime.startsWith("image/") || a.mime.startsWith("video/")) && openAsset(a)}
               className="relative flex aspect-square w-full items-center justify-center bg-[color:var(--color-surface-2)]"
             >
               {a.thumbKind ? (
@@ -113,17 +127,23 @@ export function ShareView({
       )}
 
       {lightbox && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-black/90 p-4" onClick={() => setLightbox(null)}>
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/90 p-4" onClick={() => setLightIdx(null)}>
           <div className="flex items-center justify-between text-white">
-            <span className="text-sm">{lightbox.filename}</span>
+            <span className="text-sm">{lightbox.filename} <span className="text-white/50">· {(lightIdx ?? 0) + 1} / {viewable.length}</span></span>
             <div className="flex items-center gap-3">
               {allowDownloads && (
                 <a href={fileUrl(lightbox, "?dl=1")} onClick={(e) => e.stopPropagation()} className="rounded border border-white/40 px-3 py-1 text-xs hover:bg-white hover:text-black">Download</a>
               )}
-              <button onClick={() => setLightbox(null)} aria-label="Close preview" className="text-2xl leading-none">×</button>
+              <button onClick={() => setLightIdx(null)} aria-label="Close preview" className="text-2xl leading-none">×</button>
             </div>
           </div>
-          <div className="flex flex-1 items-center justify-center overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="relative flex flex-1 items-center justify-center overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {viewable.length > 1 && (
+              <>
+                <button onClick={() => step(-1)} aria-label="Previous" className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-white hover:bg-white/20">‹</button>
+                <button onClick={() => step(1)} aria-label="Next" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-white hover:bg-white/20">›</button>
+              </>
+            )}
             {lightbox.mime.startsWith("video/") ? (
               // eslint-disable-next-line jsx-a11y/media-has-caption
               <video src={fileUrl(lightbox, "?r=proxy")} controls autoPlay className="max-h-full max-w-full" />
@@ -132,6 +152,7 @@ export function ShareView({
               <img src={fileUrl(lightbox, "")} alt={lightbox.filename} className="max-h-full max-w-full object-contain" />
             )}
           </div>
+          <p className="pt-2 text-center text-[11px] text-white/40">← → to move · Esc to close</p>
         </div>
       )}
     </>
