@@ -167,6 +167,30 @@ function Money() {
   );
 }
 
+function Welcome() {
+  return (
+    <div className="mx-auto max-w-6xl px-6 py-10">
+      <div className="mb-9"><p className="kicker mb-2">The Desk</p><h1 className="display text-4xl capitalize sm:text-5xl">Good afternoon, Isaac.</h1></div>
+      <div className="card mb-10 p-6 sm:p-8">
+        <p className="kicker mb-2">Welcome</p>
+        <h2 className="display text-2xl">Let&apos;s set up your studio.</h2>
+        <ol className="mt-4 space-y-2 text-[14px] [color:var(--color-dim)]">
+          <li><span className="mono mr-2 [color:var(--color-mute)]">1</span> Add a client — the brand or person you&apos;re working with.</li>
+          <li><span className="mono mr-2 [color:var(--color-mute)]">2</span> Start a project, then drop your files in.</li>
+          <li><span className="mono mr-2 [color:var(--color-mute)]">3</span> Share a link, or publish a gallery for delivery.</li>
+        </ol>
+        <div className="mt-5 flex flex-wrap gap-2.5"><span className="btn btn-accent btn-sm">Add your first client</span><span className="btn btn-ghost btn-sm">New project</span></div>
+      </div>
+      <div className="mb-10 flex flex-wrap gap-2.5"><span className="btn btn-accent btn-sm">+ New project</span><span className="btn btn-ghost btn-sm">Open files</span><span className="btn btn-ghost btn-sm">Client deliveries</span><span className="btn btn-ghost btn-sm">Money</span></div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[["Active projects", "0"], ["Live with clients", "0"], ["Storage used", "0 B"], ["Outstanding", "$0"]].map(([l, v]) => (
+          <div key={l} className="card p-5"><p className="kicker">{l}</p><p className="mt-2 display text-3xl">{v}</p></div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default async function AppPreview({ searchParams }: { searchParams: Promise<{ theme?: string; screen?: string }> }) {
   const sp = await searchParams;
   const light = sp.theme === "light";
@@ -176,7 +200,7 @@ export default async function AppPreview({ searchParams }: { searchParams: Promi
       <div className="flex min-h-screen">
         <Rail />
         <main className="min-w-0 flex-1">
-          {screen === "files" ? <Files /> : screen === "money" ? <Money /> : <Desk />}
+          {screen === "files" ? <Files /> : screen === "money" ? <Money /> : screen === "welcome" ? <Welcome /> : <Desk />}
         </main>
       </div>
     </div>

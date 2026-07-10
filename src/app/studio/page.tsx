@@ -75,6 +75,23 @@ export default async function TheDesk() {
         </h1>
       </div>
 
+      {/* First run — guide the very first thing to do. */}
+      {allProjects.length === 0 && (
+        <div className="card mb-10 p-6 sm:p-8">
+          <p className="kicker mb-2">Welcome</p>
+          <h2 className="display text-2xl">Let&apos;s set up your studio.</h2>
+          <ol className="mt-4 space-y-2 text-[14px] [color:var(--color-dim)]">
+            <li><span className="mono mr-2 [color:var(--color-mute)]">1</span> Add a client — the brand or person you&apos;re working with.</li>
+            <li><span className="mono mr-2 [color:var(--color-mute)]">2</span> Start a project, then drop your files in.</li>
+            <li><span className="mono mr-2 [color:var(--color-mute)]">3</span> Share a link, or publish a gallery for delivery.</li>
+          </ol>
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            <Link href="/studio/files" className="btn btn-accent btn-sm">Add your first client</Link>
+            <Link href="/studio/new" className="btn btn-ghost btn-sm">New project</Link>
+          </div>
+        </div>
+      )}
+
       {/* Quick actions */}
       <div className="mb-10 flex flex-wrap gap-2.5">
         <Link href="/studio/new" className="btn btn-accent btn-sm">+ New project</Link>
