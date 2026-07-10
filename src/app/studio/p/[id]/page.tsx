@@ -8,6 +8,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { TagEditor } from "@/components/studio/TagEditor";
 import { MoveAssetSelect } from "@/components/studio/MoveAssetSelect";
+import { isBrowserImage } from "@/lib/filetype";
 import { allTags, assetTagsMap } from "@/lib/tags";
 import { tagChipStyle } from "@/lib/tag-colors";
 import {
@@ -253,6 +254,10 @@ export default async function ProjectDetail({
                     {a.thumbKind ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={`/api/media/${a.id}?r=${a.thumbKind}`} alt="" className="h-full w-full object-cover" />
+                    ) : isBrowserImage(a.mime) ? (
+                      // No rendition yet — show the original (browser downscales).
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={`/api/media/${a.id}`} alt={a.filename} loading="lazy" className="h-full w-full object-cover" />
                     ) : (
                       <span className="kicker px-2 text-center">{a.mime.split("/")[1] ?? "file"}</span>
                     )}

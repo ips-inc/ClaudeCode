@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { isBrowserImage } from "@/lib/filetype";
 
 interface ShareAsset {
   id: string;
@@ -36,6 +37,14 @@ export function ShareView({
 }) {
   const [lightbox, setLightbox] = useState<ShareAsset | null>(null);
   const hasFolders = crumbs.length > 0 || subfolders.length > 0;
+
+  // Esc closes the lightbox — the reflex every viewer expects.
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setLightbox(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox]);
 
   const fileUrl = (a: ShareAsset, opts: string) => `/api/share/${slug}/file/${a.id}${opts}`;
   const folderHref = (id?: string) => (id ? `/s/${slug}?folder=${id}` : `/s/${slug}`);
@@ -79,6 +88,9 @@ export function ShareView({
               {a.thumbKind ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={fileUrl(a, `?r=${a.thumbKind}`)} alt={a.filename} className="h-full w-full object-cover" />
+              ) : isBrowserImage(a.mime) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={fileUrl(a, "")} alt={a.filename} loading="lazy" className="h-full w-full object-cover" />
               ) : (
                 <span className="kicker px-2 text-center">{a.mime.split("/")[1] ?? "file"}</span>
               )}

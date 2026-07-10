@@ -80,6 +80,21 @@ export function isDangerousInline(mime: string): boolean {
   return DANGEROUS_INLINE.has((mime || "").toLowerCase());
 }
 
+// Image types a browser renders directly — for these we can show the original
+// as a grid thumbnail without waiting on the worker to make a small rendition.
+// (TIFF/RAW/PSD are excluded: browsers can't paint them, so they need the worker.)
+const BROWSER_IMAGE = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+]);
+
+export function isBrowserImage(mime: string): boolean {
+  return BROWSER_IMAGE.has((mime || "").toLowerCase());
+}
+
 /** Content-Disposition value for serving an asset. */
 export function disposition(filename: string, forceDownload: boolean): string {
   const safe = filename.replace(/["\\\r\n]/g, "_");
