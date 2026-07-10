@@ -14,11 +14,15 @@ HEADERS = {
 
 
 def claim_job(kinds: list[str]) -> dict[str, Any] | None:
-    """Atomically claim one queued job via app.claim_job (SKIP LOCKED)."""
+    """Atomically claim one queued job (SKIP LOCKED under the hood).
+
+    Calls the public.claim_job wrapper — PostgREST only exposes the public
+    schema, so the app-schema original isn't reachable over REST.
+    """
     r = requests.post(
         f"{BASE}/rpc/claim_job",
         json={"kinds": kinds},
-        headers={**HEADERS, "Content-Profile": "app", "Accept-Profile": "app"},
+        headers=HEADERS,
         timeout=30,
     )
     r.raise_for_status()
