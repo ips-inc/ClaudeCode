@@ -49,14 +49,15 @@ export default async function ProjectDetail({
     .maybeSingle();
   if (!project) notFound();
 
-  const isDrive = project.kind === "drive";
-  const isReview = project.kind === "review";
-  const currentFolder = isDrive ? sp.folder ?? null : undefined;
+  // Frame-style: EVERY project is a browsable workspace. Folders exist
+  // everywhere; the kind only shapes the client-facing delivery. Search and
+  // tag filters transcend the current folder and sweep the whole project.
+  const currentFolder = sp.folder ?? null;
+  const searching = Boolean((sp.q ?? "").trim() || sp.tag);
 
   const [allAssets, folders, { data: links }] = await Promise.all([
-    // drive scopes to the current folder; other kinds show every asset
-    projectAssetsWithThumbs(id, currentFolder),
-    isDrive ? projectFolders(id) : Promise.resolve([]),
+    projectAssetsWithThumbs(id, searching ? undefined : currentFolder),
+    projectFolders(id),
     admin
       .from("share_links")
       .select("id, slug, label, password_hash, expires_at, allow_downloads, max_downloads, download_count, view_count, revoked_at")
@@ -117,7 +118,7 @@ export default async function ProjectDetail({
           <div>
             <h1 className="display text-3xl">{project.title}</h1>
             <p className="kicker mt-1.5">
-              {(project.clients as { name?: string } | null)?.name} · replaces {KIND_META[project.kind as ProjectKind].replaces}
+              {(project.clients as { name?: string } | null)?.name} · {KIND_META[project.kind as ProjectKind].label} delivery
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -132,42 +133,35 @@ export default async function ProjectDetail({
           </div>
         </div>
 
-        {/* Drive folder navigation */}
-        {isDrive && (
-          <section className="mt-8">
-            <nav className="flex flex-wrap items-center gap-1 text-[13px]">
-              <Link href={`/studio/p/${id}`} className="[color:var(--color-dim)] hover:[color:var(--color-ink)]">Home</Link>
-              {crumbs.map((c) => (
-                <span key={c.id}>
-                  <span className="[color:var(--color-faint)]"> / </span>
-                  <Link href={`/studio/p/${id}?folder=${c.id}`} className="[color:var(--color-dim)] hover:[color:var(--color-ink)]">{c.name}</Link>
-                </span>
-              ))}
-            </nav>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {subfolders.map((f) => (
-                <span key={f.id} className="flex items-center rounded-[var(--radius-sm)] border hairline bg-[color:var(--color-surface)]">
-                  <Link href={`/studio/p/${id}?folder=${f.id}`} className="px-3 py-1.5 text-[13px] hover:[color:var(--color-ink)]">📁 {f.name}</Link>
-                  <form action={deleteFolder} className="pr-1.5">
-                    <input type="hidden" name="id" value={f.id} />
-                    <input type="hidden" name="projectId" value={id} />
-                    <ConfirmButton message={`Delete folder "${f.name}" and everything inside?`} className="px-1 text-xs [color:var(--color-mute)] hover:[color:var(--color-danger)]">✕</ConfirmButton>
-                  </form>
-                </span>
-              ))}
-              <form action={createFolder} className="flex items-center gap-1">
-                <input type="hidden" name="projectId" value={id} />
-                <input type="hidden" name="parentId" value={currentFolder ?? ""} />
-                <input name="name" placeholder="New folder" className="field !h-9 !w-36 text-[13px]" />
-                <button className="btn btn-ghost btn-sm">Add</button>
-              </form>
-            </div>
-          </section>
-        )}
+        {/* Location bar — Frame-style: every project browses like a filesystem. */}
+        <section className="mt-8 flex flex-wrap items-center justify-between gap-2">
+          <nav className="flex flex-wrap items-center gap-1 text-[13px]" aria-label="Folder path">
+            <Link href={`/studio/p/${id}`} className={crumbs.length ? "[color:var(--color-dim)] hover:[color:var(--color-ink)]" : "font-medium"}>
+              {project.title}
+            </Link>
+            {crumbs.map((c, i) => (
+              <span key={c.id}>
+                <span className="[color:var(--color-faint)]"> / </span>
+                <Link
+                  href={`/studio/p/${id}?folder=${c.id}`}
+                  className={i === crumbs.length - 1 ? "font-medium" : "[color:var(--color-dim)] hover:[color:var(--color-ink)]"}
+                >
+                  {c.name}
+                </Link>
+              </span>
+            ))}
+          </nav>
+          <form action={createFolder} className="flex items-center gap-1">
+            <input type="hidden" name="projectId" value={id} />
+            <input type="hidden" name="parentId" value={currentFolder ?? ""} />
+            <input name="name" placeholder="New folder" aria-label="New folder name" className="field !h-9 !w-36 text-[13px]" />
+            <button className="btn btn-ghost btn-sm">Add folder</button>
+          </form>
+        </section>
 
-        {/* Upload */}
-        <section className="mt-8">
-          <h2 className="kicker mb-3">Upload{isDrive && crumbs.length ? ` — ${crumbs[crumbs.length - 1].name}` : ""}</h2>
+        {/* Upload — lands in the folder you're standing in. */}
+        <section className="mt-6">
+          <h2 className="kicker mb-3">Upload{crumbs.length ? ` — into ${crumbs[crumbs.length - 1].name}` : ""}</h2>
           <MultipartUploader projectId={id} folderId={currentFolder ?? null} label="Drop media or files of any size" />
         </section>
 
@@ -215,12 +209,41 @@ export default async function ProjectDetail({
               </div>
             )}
           </div>
-          {assets.length === 0 ? (
-            <p className="text-[13px] [color:var(--color-mute)]">
-              {query ? "No files match your search." : activeTag ? "No files with this tag." : "Nothing uploaded yet."}
+          {assets.length === 0 && subfolders.length === 0 ? (
+            <p className="rounded-[var(--radius-lg)] border border-dashed hairline p-10 text-center text-[13px] [color:var(--color-mute)]">
+              {query
+                ? "No files match your search."
+                : activeTag
+                  ? "No files with this tag."
+                  : "This folder is empty — drop files above or add a folder to organize."}
             </p>
           ) : (
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {/* Folders live in the grid, ahead of files — like Frame. */}
+              {!query && !activeTag && subfolders.map((f) => (
+                <li key={f.id} className="card lift group relative overflow-hidden">
+                  <Link
+                    href={`/studio/p/${id}?folder=${f.id}`}
+                    className="flex aspect-square flex-col items-center justify-center gap-2 bg-[color:var(--color-surface-2)]"
+                  >
+                    <span aria-hidden className="text-4xl">📁</span>
+                    <span className="max-w-full truncate px-3 text-[12.5px] font-medium">{f.name}</span>
+                  </Link>
+                  <div className="flex items-center justify-between px-2.5 py-2">
+                    <span className="kicker">Folder</span>
+                    <form action={deleteFolder}>
+                      <input type="hidden" name="id" value={f.id} />
+                      <input type="hidden" name="projectId" value={id} />
+                      <ConfirmButton
+                        message={`Delete folder "${f.name}" and everything inside?`}
+                        className="btn btn-ghost btn-xs !text-[color:var(--color-danger)]"
+                      >
+                        Delete
+                      </ConfirmButton>
+                    </form>
+                  </div>
+                </li>
+              ))}
               {assets.map((a) => (
                 <li key={a.id} className="card lift overflow-hidden">
                   <Link
@@ -250,7 +273,7 @@ export default async function ProjectDetail({
                         vocabulary={vocabulary}
                       />
                     </div>
-                    {isDrive && folders.length > 0 && (
+                    {folders.length > 0 && (
                       <div className="mt-2">
                         <MoveAssetSelect
                           assetId={a.id}
@@ -262,7 +285,7 @@ export default async function ProjectDetail({
                     )}
                     <div className="mt-2 flex items-center gap-1.5">
                       <Link href={`/studio/p/${id}/a/${a.id}`} className="btn btn-ghost btn-xs">
-                        {isReview && a.mime.startsWith("video/") ? "Review" : "Open"}
+                        {a.mime.startsWith("video/") ? "Review" : "Open"}
                       </Link>
                       <form action={deleteAsset}>
                         <input type="hidden" name="id" value={a.id} />

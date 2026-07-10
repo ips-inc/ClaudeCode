@@ -83,6 +83,14 @@ export default function LoginPage() {
           <LoginForm />
         </Suspense>
       </div>
+      {/* A stranded visitor needs a way out and a way forward. */}
+      <div className="relative z-10 flex flex-col items-center gap-2 text-center">
+        <p className="max-w-xs text-[12.5px] [color:var(--color-mute)]">
+          Accounts are invite-only. If Isaac sent you a delivery or review link,
+          open that link directly — no sign-in needed.
+        </p>
+        <a href="/" className="kicker hover:[color:var(--color-ink)]">← Back to isaacpoole.co</a>
+      </div>
     </main>
   );
 }
