@@ -42,12 +42,16 @@ export default async function NewProject() {
           </label>
 
           <fieldset className="space-y-2">
-            <legend className="kicker mb-2">Type</legend>
+            <legend className="kicker mb-2">Delivery style</legend>
+            <p className="mb-2 text-[12.5px] [color:var(--color-mute)]">
+              Every project works the same inside — folders, upload, review, tags, sharing.
+              This only sets how the client-facing delivery presents.
+            </p>
             {KINDS.map((k, i) => (
               <label key={k} className="flex cursor-pointer items-center gap-3 rounded-[var(--radius-sm)] border hairline bg-[color:var(--color-surface)] p-3 text-[14px] transition has-checked:border-[color:var(--color-accent)]">
                 <input type="radio" name="kind" value={k} defaultChecked={i === 0} className="accent-[color:var(--color-accent)]" />
                 <span className="font-medium">{KIND_META[k].label}</span>
-                <span className="kicker ml-auto normal-case">replaces {KIND_META[k].replaces}</span>
+                <span className="kicker ml-auto normal-case">{KIND_META[k].blurb}</span>
               </label>
             ))}
           </fieldset>

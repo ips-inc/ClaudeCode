@@ -92,7 +92,7 @@ export function ShareView({
                 <p className="mono text-[10.5px] [color:var(--color-mute)]">{fmt(a.size_bytes)}</p>
               </div>
               {allowDownloads && (
-                <a href={fileUrl(a, "?dl=1")} className="btn btn-ghost btn-xs shrink-0">↓</a>
+                <a href={fileUrl(a, "?dl=1")} aria-label={`Download ${a.filename}`} title="Download" className="btn btn-ghost btn-xs shrink-0">↓</a>
               )}
             </div>
           </li>
@@ -108,7 +108,7 @@ export function ShareView({
               {allowDownloads && (
                 <a href={fileUrl(lightbox, "?dl=1")} onClick={(e) => e.stopPropagation()} className="rounded border border-white/40 px-3 py-1 text-xs hover:bg-white hover:text-black">Download</a>
               )}
-              <button onClick={() => setLightbox(null)} className="text-2xl leading-none">×</button>
+              <button onClick={() => setLightbox(null)} aria-label="Close preview" className="text-2xl leading-none">×</button>
             </div>
           </div>
           <div className="flex flex-1 items-center justify-center overflow-hidden" onClick={(e) => e.stopPropagation()}>

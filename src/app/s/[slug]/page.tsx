@@ -50,22 +50,19 @@ export default async function PublicShare({
     () => {}
   );
 
-  // Drive projects browse by folder; other kinds show every file flat.
-  const isDrive = share.project.kind === "drive";
-  const currentFolder = isDrive ? (await searchParams).folder ?? null : undefined;
-
-  const folders = isDrive
-    ? ((await db.rpc("share_folders", { p_link_id: share.linkId })).data ?? []) as {
-        id: string;
-        parent_id: string | null;
-        name: string;
-      }[]
-    : [];
+  // Projects with folders browse like a filesystem; flat projects show all.
+  const folders = ((await db.rpc("share_folders", { p_link_id: share.linkId })).data ?? []) as {
+    id: string;
+    parent_id: string | null;
+    name: string;
+  }[];
+  const browseFolders = folders.length > 0;
+  const currentFolder = browseFolders ? (await searchParams).folder ?? null : undefined;
 
   const { data: assetRows } = await db.rpc("share_list_assets", {
     p_link_id: share.linkId,
     p_folder: currentFolder ?? null,
-    p_by_folder: isDrive,
+    p_by_folder: browseFolders,
   });
   const assets = (assetRows ?? []) as {
     id: string;
