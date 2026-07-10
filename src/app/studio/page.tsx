@@ -107,7 +107,7 @@ export default async function TheDesk() {
             <p className="kicker">{s.label}</p>
             <p className="mt-2 display text-3xl">{s.value}</p>
             {s.hint && (
-              <span className="mt-1.5 inline-block whitespace-nowrap text-[11px] font-medium [color:var(--color-danger)]">
+              <span className="mt-1.5 inline-block text-[11px] font-medium [color:var(--color-danger)]">
                 {s.hint}
               </span>
             )}
