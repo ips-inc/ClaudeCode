@@ -92,6 +92,58 @@ export async function deleteAsset(formData: FormData) {
   revalidatePath(`/studio/p/${projectId}`);
 }
 
+/**
+ * Bulk operation on selected assets: tag, move, or delete many at once.
+ * Every mutation is scoped to the project AND the caller's RLS view, so a
+ * forged id from another project is a no-op.
+ */
+export async function bulkAssets(formData: FormData) {
+  const actor = await requireMember();
+  const projectId = String(formData.get("projectId"));
+  const op = String(formData.get("op") || "");
+  const ids = (formData.getAll("ids") as string[]).filter(Boolean).slice(0, 200);
+  if (!ids.length) return;
+  const db = await supabaseServer();
+
+  if (op === "tag") {
+    const tagId = String(formData.get("tagId") || "");
+    if (!tagId) return;
+    await db.from("asset_tags").upsert(
+      ids.map((assetId) => ({ asset_id: assetId, tag_id: tagId, created_by: actor.id })),
+      { onConflict: "asset_id,tag_id", ignoreDuplicates: true }
+    );
+  } else if (op === "move") {
+    const folderId = String(formData.get("folderId") || "") || null;
+    if (folderId) {
+      const { data: folder } = await db
+        .from("folders")
+        .select("id")
+        .eq("id", folderId)
+        .eq("project_id", projectId)
+        .maybeSingle();
+      if (!folder) throw new Error("Folder not in this project");
+    }
+    await db.from("assets").update({ folder_id: folderId }).in("id", ids).eq("project_id", projectId);
+  } else if (op === "delete") {
+    const { data: assets } = await db
+      .from("assets")
+      .select("id, storage_key")
+      .in("id", ids)
+      .eq("project_id", projectId);
+    const realIds = (assets ?? []).map((a) => a.id);
+    if (realIds.length) {
+      const { data: rends } = await db.from("renditions").select("storage_key").in("asset_id", realIds);
+      const keys = [
+        ...(assets ?? []).map((a) => a.storage_key),
+        ...(rends ?? []).map((r) => r.storage_key),
+      ].filter(Boolean) as string[];
+      if (keys.length) await deleteObjects(keys);
+      await db.from("assets").delete().in("id", realIds);
+    }
+  }
+  revalidatePath(`/studio/p/${projectId}`);
+}
+
 /** Move an asset into a folder (empty string = project root). */
 export async function moveAsset(formData: FormData) {
   await requireMember();

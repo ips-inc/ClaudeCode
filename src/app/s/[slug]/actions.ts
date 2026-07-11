@@ -19,7 +19,12 @@ export async function unlockShare(formData: FormData) {
     p_password: password,
   });
 
-  if (!linkId) redirect(`/s/${slug}?err=1`);
+  if (!linkId) {
+    // Flat 1.5s tax on wrong guesses: with bcrypt cost 10 underneath, online
+    // brute force against a share password becomes uneconomical.
+    await new Promise((r) => setTimeout(r, 1500));
+    redirect(`/s/${slug}?err=1`);
+  }
 
   const jar = await cookies();
   jar.set(unlockCookieName(slug), String(linkId), {
