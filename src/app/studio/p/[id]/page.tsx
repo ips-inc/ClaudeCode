@@ -18,6 +18,7 @@ import {
   revokeShareLink,
   createFolder,
   deleteFolder,
+  bulkAssets,
 } from "@/app/studio/actions";
 import { KIND_META, type ProjectKind } from "@/lib/types";
 
@@ -219,6 +220,39 @@ export default async function ProjectDetail({
                   : "This folder is empty — drop files above or add a folder to organize."}
             </p>
           ) : (
+            <>
+            {/* Bulk bar — checkboxes on the cards reference this form by id,
+                so many files can be tagged, moved, or deleted in one action. */}
+            {assets.length > 0 && (
+              <form id="bulk" action={bulkAssets} className="card mb-3 flex flex-wrap items-center gap-2 bg-[color:var(--color-surface-2)] p-2.5 text-[13px]">
+                <input type="hidden" name="projectId" value={id} />
+                <span className="kicker">With selected</span>
+                <select name="op" className="field !h-9 !w-auto text-[13px]" aria-label="Bulk action">
+                  <option value="tag">Add tag</option>
+                  {folders.length > 0 && <option value="move">Move to folder</option>}
+                  <option value="delete">Delete</option>
+                </select>
+                {vocabulary.length > 0 && (
+                  <select name="tagId" className="field !h-9 !w-auto text-[13px]" aria-label="Tag to add">
+                    {vocabulary.map((t) => (
+                      <option key={t.id} value={t.id}>{t.label}</option>
+                    ))}
+                  </select>
+                )}
+                {folders.length > 0 && (
+                  <select name="folderId" className="field !h-9 !w-auto text-[13px]" aria-label="Destination folder">
+                    <option value="">📁 Home</option>
+                    {folders.map((f) => (
+                      <option key={f.id} value={f.id}>📁 {f.name}</option>
+                    ))}
+                  </select>
+                )}
+                <ConfirmButton message="Apply this action to every selected file?" className="btn btn-ghost btn-sm">
+                  Apply
+                </ConfirmButton>
+                <span className="text-[11.5px] [color:var(--color-mute)]">tick files below to select them</span>
+              </form>
+            )}
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {/* Folders live in the grid, ahead of files — like Frame. */}
               {!query && !activeTag && subfolders.map((f) => (
@@ -246,7 +280,15 @@ export default async function ProjectDetail({
                 </li>
               ))}
               {assets.map((a) => (
-                <li key={a.id} className="card lift overflow-hidden">
+                <li key={a.id} className="card lift relative overflow-hidden">
+                  <input
+                    type="checkbox"
+                    name="ids"
+                    value={a.id}
+                    form="bulk"
+                    aria-label={`Select ${a.filename}`}
+                    className="absolute left-2 top-2 z-10 h-5 w-5 cursor-pointer rounded accent-[color:var(--color-accent)]"
+                  />
                   <Link
                     href={`/studio/p/${id}/a/${a.id}`}
                     className="relative flex aspect-square items-center justify-center bg-[color:var(--color-surface-2)]"
@@ -302,6 +344,7 @@ export default async function ProjectDetail({
                 </li>
               ))}
             </ul>
+            </>
           )}
         </section>
 
