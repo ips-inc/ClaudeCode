@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEV HOLDING — The house</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --stone: #F2F2EF;
+    --ink: #16150F;
+    --dim: rgba(22, 21, 15, 0.55);
+    --faint: rgba(22, 21, 15, 0.3);
+    --hairline: rgba(22, 21, 15, 0.14);
+    --gold: #A08347;
+    --sapphire: #2F4BE0;
+    --emerald: #0E8F6E;
+    --serif: "Instrument Serif", Didot, "Bodoni MT", Georgia, serif;
+    --sans: "Inter Tight", "Helvetica Neue", system-ui, sans-serif;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--stone);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: var(--ink); color: var(--stone); }
+  a { color: inherit; }
+  :focus-visible { outline: 1px solid var(--gold); outline-offset: 4px; }
+
+  .orb {
+    position: fixed;
+    z-index: 0;
+    width: 44vmax;
+    height: 44vmax;
+    top: 10%;
+    left: -14%;
+    border-radius: 50%;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 32% 30%, rgba(255,255,255,0.9), transparent 40%),
+      conic-gradient(from 30deg,
+        rgba(47, 75, 224, 0.2),
+        rgba(160, 131, 71, 0.24),
+        rgba(14, 143, 110, 0.16),
+        rgba(120, 90, 220, 0.18),
+        rgba(47, 75, 224, 0.2));
+    filter: blur(46px) saturate(1.15);
+    transition: transform 1.2s var(--ease);
+  }
+
+  .grain {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 26px 40px;
+    mix-blend-mode: multiply;
+  }
+  .brand {
+    font-family: var(--serif);
+    font-size: 19px;
+    letter-spacing: 0.32em;
+    text-decoration: none;
+  }
+  .brand span { color: var(--gold); }
+  nav { display: flex; gap: 34px; }
+  nav a {
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--dim);
+    transition: color 0.4s;
+  }
+  nav a:hover { color: var(--ink); }
+  nav a[aria-current="page"] { color: var(--ink); }
+
+  main { position: relative; z-index: 2; }
+
+  .stage {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1.2s var(--ease), transform 1.2s var(--ease);
+  }
+  body.begun .stage { opacity: 1; transform: none; }
+  body.begun .stage.s2 { transition-delay: 0.2s; }
+  body.begun .stage.s3 { transition-delay: 0.4s; }
+
+  /* ---------- the house (about) ---------- */
+  .house {
+    min-height: 86svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 170px clamp(24px, 8vw, 130px) 60px;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 34px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 54px;
+    height: 1px;
+    background: var(--gold);
+  }
+  .house h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(38px, 5.6vw, 76px);
+    line-height: 1.14;
+    letter-spacing: 0.005em;
+    max-width: 20ch;
+  }
+  .house h1 em { font-style: italic; color: var(--gold); }
+  .house .body {
+    max-width: 520px;
+    margin-top: 40px;
+    color: var(--dim);
+    font-size: 15px;
+  }
+  .house .body p + p { margin-top: 18px; }
+  .house .body strong { font-weight: 500; color: var(--ink); }
+
+  /* ---------- register ---------- */
+  .register {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 60px clamp(24px, 8vw, 130px) 120px;
+  }
+  .register .eyebrow { margin-bottom: 10px; }
+  .reg-row {
+    display: grid;
+    grid-template-columns: 84px 1fr auto;
+    align-items: baseline;
+    gap: 26px;
+    padding: 26px 4px;
+    border-top: 1px solid var(--hairline);
+    text-decoration: none;
+    transition: padding-left 0.5s var(--ease);
+  }
+  .reg-row:last-child { border-bottom: 1px solid var(--hairline); }
+  a.reg-row:hover { padding-left: 22px; }
+  .reg-row .no {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--faint);
+    font-size: 15px;
+  }
+  .reg-row .nm {
+    font-family: var(--serif);
+    font-size: clamp(22px, 3vw, 34px);
+    line-height: 1.15;
+  }
+  .reg-row .nm small {
+    display: block;
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-top: 6px;
+  }
+  .reg-row .st {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .reg-row .st.gold { color: var(--gold); }
+
+  /* ---------- the door (contact) ---------- */
+  .door {
+    min-height: 92svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 24px;
+    border-top: 1px solid var(--hairline);
+  }
+  .door .eyebrow { justify-content: center; }
+  .door .eyebrow::before { display: none; }
+  .door h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(40px, 6.5vw, 92px);
+    line-height: 1.05;
+  }
+  .door .address {
+    display: inline-block;
+    margin-top: 46px;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(26px, 5.4vw, 84px);
+    line-height: 1.1;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--ink);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.5s var(--ease);
+    overflow-wrap: anywhere;
+    max-width: 100%;
+  }
+  .door .address:hover,
+  .door .address:focus-visible { color: var(--ink); }
+  .door .copied {
+    display: block;
+    margin-top: 20px;
+    font-size: 11px;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0;
+    transition: opacity 0.4s var(--ease);
+  }
+  .door .copied.show { opacity: 1; }
+  .door .mail-cta {
+    display: inline-block;
+    margin-top: 34px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--ink);
+    padding: 15px 32px;
+    border: 1px solid var(--ink);
+    border-radius: 100px;
+    position: relative;
+    overflow: hidden;
+    z-index: 0;
+    transition: color 0.5s;
+  }
+  .door .mail-cta::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--ink);
+    transform: translateY(101%);
+    transition: transform 0.5s var(--ease);
+    z-index: -1;
+  }
+  .door .mail-cta:hover, .door .mail-cta:focus-visible { color: var(--stone); }
+  .door .mail-cta:hover::before, .door .mail-cta:focus-visible::before { transform: translateY(0); }
+  .door .routes {
+    margin-top: 64px;
+    display: flex;
+    justify-content: center;
+    gap: clamp(24px, 6vw, 80px);
+    flex-wrap: wrap;
+  }
+  .door .routes a, .door .routes span {
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--dim);
+    text-decoration: none;
+  }
+  .door .routes a:hover { color: var(--ink); }
+  .door .routes em {
+    font-family: var(--serif);
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 14px;
+    color: var(--faint);
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  footer {
+    border-top: 1px solid var(--hairline);
+    padding: 46px 40px 54px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+  }
+  footer .fmark {
+    font-family: var(--serif);
+    letter-spacing: 0.3em;
+    font-size: 15px;
+  }
+  footer .fmark span { color: var(--gold); }
+  footer a, footer p {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dim);
+    text-decoration: none;
+  }
+  footer a:hover { color: var(--ink); }
+
+  @media (max-width: 720px) {
+    header { padding: 20px 22px; }
+    .reg-row { grid-template-columns: 40px 1fr; }
+    .reg-row .st { grid-column: 2; }
+    footer { justify-content: center; text-align: center; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
+    html { scroll-behavior: auto; }
+    .stage { opacity: 1 !important; transform: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb" id="orb" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header>
+  <a class="brand" href="index.html">SEV<span>.</span></a>
+  <nav aria-label="Primary">
+    <a href="index.html#hall">Maisons</a>
+    <a href="contact.html" aria-current="page">The house</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ============ THE HOUSE ============ -->
+  <section class="house">
+    <p class="eyebrow stage">The house</p>
+    <h1 class="stage s2">
+      SEV Holding is a private house of ventures — it owns, funds, and
+      connects them, then <em>gets out of their way.</em>
+    </h1>
+    <div class="body stage s3">
+      <p>
+        <strong>The work lives with the maisons.</strong> SEV Holding LLC is
+        the parent of ISAAC POOLE STUDIO INC. and affiliated ventures — the
+        structure behind them: ownership, capital, and connective tissue.
+      </p>
+      <p>
+        The house does not take commissions, publish work, or keep a
+        portfolio. When you are looking for the craft, you are looking
+        for a maison.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ REGISTER ============ -->
+  <section class="register">
+    <p class="eyebrow">The register</p>
+    <a class="reg-row" href="https://isaacpoole.co">
+      <span class="no">N°01</span>
+      <span class="nm">ISAAC POOLE STUDIO INC.<small>Portraiture · Editorial · Moving image</small></span>
+      <span class="st gold">Active</span>
+    </a>
+    <div class="reg-row">
+      <span class="no">N°02</span>
+      <span class="nm">BookIt<small>Booking, without the back-and-forth</small></span>
+      <span class="st">In atelier</span>
+    </div>
+    <div class="reg-row">
+      <span class="no">N°03</span>
+      <span class="nm">—<small>Reserved</small></span>
+      <span class="st">Unwritten</span>
+    </div>
+  </section>
+
+  <!-- ============ THE DOOR ============ -->
+  <section class="door" id="door">
+    <div>
+      <p class="eyebrow">The door</p>
+      <h2>Write to the house.</h2>
+      <button class="address" id="address" type="button"
+        aria-label="Copy contact@sev-holding.com to clipboard">
+        contact@sev&#8209;holding.com
+      </button>
+      <span class="copied" id="copied" role="status">Copied — talk soon</span>
+      <div>
+        <a class="mail-cta" href="mailto:contact@sev-holding.com">Open mail</a>
+      </div>
+      <div class="routes">
+        <a href="https://isaacpoole.co"><em>For the studio</em>isaacpoole.co</a>
+        <span><em>For BookIt</em>Unveiling soon</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p class="fmark">SEV<span>.</span></p>
+  <a href="mailto:contact@sev-holding.com">contact@sev-holding.com</a>
+  <p>© MMXXVI SEV Holding LLC</p>
+</footer>
+
+<script>
+(function () {
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () { document.body.classList.add("begun"); });
+  });
+
+  var orb = document.getElementById("orb");
+  if (!reduced) {
+    window.addEventListener("pointermove", function (e) {
+      var mx = (e.clientX / innerWidth - 0.5) * -50;
+      var my = (e.clientY / innerHeight - 0.5) * -36;
+      orb.style.transform = "translate3d(" + mx + "px," + (my + scrollY * -0.04) + "px,0)";
+    }, { passive: true });
+  }
+
+  var address = document.getElementById("address");
+  var copied = document.getElementById("copied");
+  var copyTimer;
+  address.addEventListener("click", function () {
+    var email = "contact@sev-holding.com";
+    function confirm() {
+      copied.classList.add("show");
+      clearTimeout(copyTimer);
+      copyTimer = setTimeout(function () { copied.classList.remove("show"); }, 2600);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(email).then(confirm, function () {
+        location.href = "mailto:" + email;
+      });
+    } else {
+      location.href = "mailto:" + email;
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
