@@ -226,33 +226,42 @@
   }
   .door .address {
     display: inline-block;
-    margin-top: 46px;
+    margin-top: 52px;
     font-family: var(--serif);
-    font-style: italic;
-    font-size: clamp(26px, 5.4vw, 84px);
-    line-height: 1.1;
-    color: transparent;
-    -webkit-text-stroke: 1px var(--ink);
+    font-size: clamp(24px, 3.2vw, 44px);
+    line-height: 1.2;
+    letter-spacing: 0.015em;
+    color: var(--ink);
     background: none;
     border: none;
     cursor: pointer;
-    transition: color 0.5s var(--ease);
+    position: relative;
+    padding: 0 6px 12px;
     overflow-wrap: anywhere;
     max-width: 100%;
   }
-  .door .address:hover,
-  .door .address:focus-visible { color: var(--ink); }
-  .door .copied {
+  .door .address::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 1px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.6s var(--ease);
+  }
+  .door .address:hover::after,
+  .door .address:focus-visible::after { transform: scaleX(1); }
+  .door .hint {
     display: block;
-    margin-top: 20px;
-    font-size: 11px;
+    margin-top: 18px;
+    font-size: 10px;
     letter-spacing: 0.34em;
     text-transform: uppercase;
-    color: var(--gold);
-    opacity: 0;
-    transition: opacity 0.4s var(--ease);
+    color: var(--faint);
+    transition: color 0.4s var(--ease);
   }
-  .door .copied.show { opacity: 1; }
+  .door .hint.done { color: var(--gold); }
   .door .mail-cta {
     display: inline-block;
     margin-top: 34px;
@@ -412,7 +421,7 @@
         aria-label="Copy contact@sev-holding.com to clipboard">
         contact@sev&#8209;holding.com
       </button>
-      <span class="copied" id="copied" role="status">Copied — talk soon</span>
+      <span class="hint" id="hint" role="status">Click to copy</span>
       <div>
         <a class="mail-cta" href="mailto:contact@sev-holding.com">Open mail</a>
       </div>
@@ -449,14 +458,18 @@
   }
 
   var address = document.getElementById("address");
-  var copied = document.getElementById("copied");
+  var hint = document.getElementById("hint");
   var copyTimer;
   address.addEventListener("click", function () {
     var email = "contact@sev-holding.com";
     function confirm() {
-      copied.classList.add("show");
+      hint.textContent = "Copied — talk soon";
+      hint.classList.add("done");
       clearTimeout(copyTimer);
-      copyTimer = setTimeout(function () { copied.classList.remove("show"); }, 2600);
+      copyTimer = setTimeout(function () {
+        hint.textContent = "Click to copy";
+        hint.classList.remove("done");
+      }, 2600);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(email).then(confirm, function () {
