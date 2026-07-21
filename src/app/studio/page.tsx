@@ -43,7 +43,8 @@ export default async function TheDesk() {
       .is("version_of", null)
       .order("created_at", { ascending: false })
       .limit(8),
-    db.from("assets").select("size_bytes").is("version_of", null),
+    // Storage counts EVERY object — old versions in a stack still occupy bytes.
+    db.from("assets").select("size_bytes"),
   ]);
 
   const allProjects = projects ?? [];

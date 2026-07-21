@@ -187,3 +187,25 @@ Closed the two things between "code-complete" and "actually usable":
   by hand so the build stays green on every push. (Security SQL suites run via
   `supabase/tests/run.sh` against a real project — they need the Supabase stack, so out of CI.)
 - All four project kinds now fully functional: gallery, review, transfer, drive.
+
+## 2026-07-21 — Version stacks (Frame.io-style)
+
+- **Stacks shipped.** Any upload can declare `versionOf` → becomes the next
+  version of that asset's stack (root = original upload; root id stays the
+  stable identity for links/tags/shares). `/api/upload/start` resolves the
+  root, inherits its folder, computes `version = head+1`.
+- Grid + /deliver show the stack HEAD (thumb, name, size) with a
+  "v3 · 3 versions" badge; card links stay on the root id.
+- Asset viewer: version picker (`?v=N`), per-version comments/tags/review,
+  "upload new version" dropzone, download the pinned version.
+- Deletes purge the WHOLE stack's objects (single + bulk) — root delete
+  cascades rows, so keys are collected first.
+- Migration `0015_version_stacks.sql` (applied live): `share_list_assets`
+  returns one row per stack with the head's id/filename/mime/size — clients
+  always get the newest cut. `share_file` unchanged (project-scoped already).
+- Desk storage tile now sums ALL assets (old versions occupy bytes).
+- **Session friction:** MCP connectors flapped hard (permission stream
+  aborts); Supabase calls need blind retries. Railway still unconnected —
+  worker canary `bad1164a` still queued, 0 attempts since 07-10: the worker
+  service has never claimed a job. Needs Railway MCP connector or a
+  RAILWAY_TOKEN to diagnose from here.

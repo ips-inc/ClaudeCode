@@ -16,8 +16,10 @@ deliveries, **outstanding AR + overdue**), recent uploads, live-with-clients.
 - ✅ Large-file multipart upload (any size), drag-drop
 - ✅ In-project **search + sort**
 - ✅ **Collaborators** — outside editors added per client (`/studio/team`)
-- ⏳ Move files between folders; bulk select/tag/delete
-- ⏳ Versions / stacks
+- ✅ Move files between folders; bulk select/tag/delete
+- ✅ **Versions / stacks** — upload v2 onto any file; grid shows the newest cut
+      with a version badge, the viewer gets a version picker (per-version
+      comments and tags), and share links always deliver the latest version
 - ⏳ Brand-new-user email invites (needs email/invite setup)
 
 ### 3. Deliver (client-facing) — `/deliver`, `/s/[slug]`

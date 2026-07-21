@@ -42,10 +42,13 @@ async function putPart(url: string, blob: Blob): Promise<string> {
 export function MultipartUploader({
   projectId,
   folderId = null,
+  versionOf = null,
   label = "Drop files, or click to choose",
 }: {
   projectId: string;
   folderId?: string | null;
+  /** Stack target: uploads become the next version of this asset. */
+  versionOf?: string | null;
   label?: string;
 }) {
   const router = useRouter();
@@ -70,6 +73,7 @@ export function MultipartUploader({
           body: JSON.stringify({
             projectId,
             folderId,
+            versionOf,
             filename: file.name,
             size: file.size,
             mime: file.type || "application/octet-stream",

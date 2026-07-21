@@ -83,10 +83,21 @@ export async function deleteAsset(formData: FormData) {
   const id = String(formData.get("id"));
   const projectId = String(formData.get("projectId"));
   const admin = await supabaseServer();
-  // Collect the original + every rendition key, then purge from object storage.
-  const { data: asset } = await admin.from("assets").select("storage_key").eq("id", id).maybeSingle();
-  const { data: rends } = await admin.from("renditions").select("storage_key").eq("asset_id", id);
-  const keys = [asset?.storage_key, ...(rends ?? []).map((r) => r.storage_key)].filter(Boolean) as string[];
+  // Deleting a stack root cascades every version row with it, so collect the
+  // storage keys of the WHOLE stack (originals + renditions) before the rows
+  // vanish, then purge object storage.
+  const { data: stack } = await admin
+    .from("assets")
+    .select("id, storage_key")
+    .or(`id.eq.${id},version_of.eq.${id}`);
+  const stackIds = (stack ?? []).map((a) => a.id);
+  const { data: rends } = stackIds.length
+    ? await admin.from("renditions").select("storage_key").in("asset_id", stackIds)
+    : { data: [] };
+  const keys = [
+    ...(stack ?? []).map((a) => a.storage_key),
+    ...(rends ?? []).map((r) => r.storage_key),
+  ].filter(Boolean) as string[];
   if (keys.length) await deleteObjects(keys);
   await admin.from("assets").delete().eq("id", id);
   revalidatePath(`/studio/p/${projectId}`);
@@ -125,10 +136,12 @@ export async function bulkAssets(formData: FormData) {
     }
     await db.from("assets").update({ folder_id: folderId }).in("id", ids).eq("project_id", projectId);
   } else if (op === "delete") {
+    // Sweep version stacks too: deleting a root cascades its versions, so
+    // their objects must be purged alongside the selected rows.
     const { data: assets } = await db
       .from("assets")
       .select("id, storage_key")
-      .in("id", ids)
+      .or(`id.in.(${ids.join(",")}),version_of.in.(${ids.join(",")})`)
       .eq("project_id", projectId);
     const realIds = (assets ?? []).map((a) => a.id);
     if (realIds.length) {

@@ -295,17 +295,22 @@ export default async function ProjectDetail({
                   >
                     {a.thumbKind ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={`/api/media/${a.id}?r=${a.thumbKind}`} alt="" className="h-full w-full object-cover" />
+                      <img src={`/api/media/${a.displayId}?r=${a.thumbKind}`} alt="" className="h-full w-full object-cover" />
                     ) : isBrowserImage(a.mime) ? (
                       // No rendition yet — show the original (browser downscales).
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={`/api/media/${a.id}`} alt={a.filename} loading="lazy" className="h-full w-full object-cover" />
+                      <img src={`/api/media/${a.displayId}`} alt={a.filename} loading="lazy" className="h-full w-full object-cover" />
                     ) : (
                       <span className="kicker px-2 text-center">{a.mime.split("/")[1] ?? "file"}</span>
                     )}
                     {a.mime.startsWith("video/") && (
                       <span className="absolute inset-0 flex items-center justify-center">
                         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-[13px] text-white">▶</span>
+                      </span>
+                    )}
+                    {a.versionCount > 1 && (
+                      <span className="absolute bottom-2 right-2 rounded-full bg-black/55 px-2 py-0.5 text-[10.5px] font-medium text-white">
+                        v{a.version} · {a.versionCount} versions
                       </span>
                     )}
                   </Link>

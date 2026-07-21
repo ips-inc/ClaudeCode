@@ -20,7 +20,8 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null);
   const projectId = String(body?.projectId ?? "");
-  const folderId = body?.folderId ? String(body.folderId) : null;
+  let folderId = body?.folderId ? String(body.folderId) : null;
+  const versionOf = body?.versionOf ? String(body.versionOf) : null;
   const filename = String(body?.filename ?? "").slice(0, 255);
   const size = Number(body?.size ?? 0);
   const declaredMime = String(body?.mime ?? "application/octet-stream").slice(0, 127);
@@ -39,6 +40,34 @@ export async function POST(request: NextRequest) {
     .eq("id", projectId)
     .single();
   if (!project) return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+  // Version stacks: an upload can declare itself a new version of an existing
+  // asset. Resolve to the stack ROOT (versions of a version collapse onto the
+  // original) and inherit its folder so the stack never splits across folders.
+  let stack: { rootId: string; version: number } | null = null;
+  if (versionOf) {
+    const { data: target } = await db
+      .from("assets")
+      .select("id, project_id, folder_id, version_of")
+      .eq("id", versionOf)
+      .maybeSingle();
+    if (!target || target.project_id !== projectId) {
+      return NextResponse.json({ error: "bad_version_target" }, { status: 400 });
+    }
+    const rootId = target.version_of ?? target.id;
+    const [{ data: head }, { data: root }] = await Promise.all([
+      db
+        .from("assets")
+        .select("version")
+        .or(`id.eq.${rootId},version_of.eq.${rootId}`)
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      db.from("assets").select("folder_id").eq("id", rootId).maybeSingle(),
+    ]);
+    stack = { rootId, version: (head?.version ?? 1) + 1 };
+    folderId = root?.folder_id ?? null;
+  }
 
   // Destination folder must belong to this project (FK alone doesn't check).
   if (folderId) {
@@ -64,6 +93,7 @@ export async function POST(request: NextRequest) {
     mime: declaredMime, // provisional — re-sniffed server-side at /complete
     size_bytes: size,
     scan_status: "pending",
+    ...(stack ? { version_of: stack.rootId, version: stack.version } : {}),
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -75,7 +105,7 @@ export async function POST(request: NextRequest) {
     actorId: actor.id,
     objectType: "asset",
     objectId: assetId,
-    meta: { filename: safeName, size },
+    meta: { filename: safeName, size, ...(stack ? { version_of: stack.rootId, version: stack.version } : {}) },
   });
 
   return NextResponse.json({
