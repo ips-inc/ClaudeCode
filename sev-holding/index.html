@@ -3,18 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SEV HOLDING — The house behind the houses</title>
+<title>SEV HOLDING — A private house of ventures</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
-    --black: #060608;
-    --ivory: #F4F1E8;
-    --dim: rgba(244, 241, 232, 0.55);
-    --faint: rgba(244, 241, 232, 0.28);
-    --hairline: rgba(244, 241, 232, 0.14);
-    --gold: #C9A96B;
+    --stone: #F2F2EF;
+    --stone-deep: #E9E9E4;
+    --ink: #16150F;
+    --dim: rgba(22, 21, 15, 0.55);
+    --faint: rgba(22, 21, 15, 0.3);
+    --hairline: rgba(22, 21, 15, 0.14);
+    --gold: #A08347;
+    --sapphire: #2F4BE0;
+    --emerald: #0E8F6E;
     --serif: "Instrument Serif", Didot, "Bodoni MT", Georgia, serif;
     --sans: "Inter Tight", "Helvetica Neue", system-ui, sans-serif;
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
@@ -25,8 +28,8 @@
   html { scroll-behavior: smooth; }
 
   body {
-    background: var(--black);
-    color: var(--ivory);
+    background: var(--stone);
+    color: var(--ink);
     font-family: var(--sans);
     font-weight: 300;
     font-size: 16px;
@@ -35,7 +38,7 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  ::selection { background: var(--gold); color: var(--black); }
+  ::selection { background: var(--ink); color: var(--stone); }
 
   a { color: inherit; }
 
@@ -44,14 +47,27 @@
     outline-offset: 4px;
   }
 
-  /* ---------- aurora silk canvas ---------- */
-  #silk {
+  /* ---------- iridescent orb ---------- */
+  .orb {
     position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
     z-index: 0;
+    width: 44vmax;
+    height: 44vmax;
+    top: 8%;
+    right: -10%;
+    border-radius: 50%;
     pointer-events: none;
+    background:
+      radial-gradient(circle at 32% 30%, rgba(255,255,255,0.9), transparent 40%),
+      conic-gradient(from 210deg,
+        rgba(47, 75, 224, 0.22),
+        rgba(160, 131, 71, 0.25),
+        rgba(14, 143, 110, 0.18),
+        rgba(120, 90, 220, 0.2),
+        rgba(47, 75, 224, 0.22));
+    filter: blur(46px) saturate(1.15);
+    transform: translate3d(0,0,0);
+    transition: transform 1.2s var(--ease);
   }
 
   .grain {
@@ -59,35 +75,8 @@
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    opacity: 0.5;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-
-  /* ---------- intro veil ---------- */
-  .veil {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    background: var(--black);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 1s var(--ease), visibility 1s;
-  }
-  .veil.gone { opacity: 0; visibility: hidden; }
-  .veil .mark {
-    font-family: var(--serif);
-    font-size: clamp(40px, 6vw, 84px);
-    letter-spacing: 0.5em;
-    padding-left: 0.5em;
-    color: var(--ivory);
-    opacity: 0;
-    animation: veilmark 1.6s var(--ease) forwards;
-  }
-  @keyframes veilmark {
-    0% { opacity: 0; letter-spacing: 0.8em; }
-    60% { opacity: 1; }
-    100% { opacity: 1; letter-spacing: 0.5em; }
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   /* ---------- chrome ---------- */
@@ -99,6 +88,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 26px 40px;
+    mix-blend-mode: multiply;
   }
   .brand {
     font-family: var(--serif);
@@ -107,7 +97,7 @@
     text-decoration: none;
   }
   .brand span { color: var(--gold); }
-  nav { display: flex; gap: 34px; align-items: center; }
+  nav { display: flex; gap: 34px; }
   nav a {
     font-size: 11px;
     font-weight: 400;
@@ -117,7 +107,7 @@
     color: var(--dim);
     transition: color 0.4s;
   }
-  nav a:hover { color: var(--ivory); }
+  nav a:hover { color: var(--ink); }
 
   .progress {
     position: fixed;
@@ -127,7 +117,7 @@
     z-index: 60;
     transform-origin: left;
     transform: scaleX(0);
-    background: linear-gradient(90deg, var(--gold), rgba(201,169,107,0.2));
+    background: var(--gold);
   }
 
   main { position: relative; z-index: 2; }
@@ -137,10 +127,8 @@
     min-height: 100svh;
     display: flex;
     flex-direction: column;
-    align-items: center;
     justify-content: center;
-    text-align: center;
-    padding: 120px 24px 80px;
+    padding: 140px clamp(24px, 7vw, 110px) 90px;
     position: relative;
   }
   .hero .eyebrow {
@@ -149,245 +137,235 @@
     letter-spacing: 0.5em;
     text-transform: uppercase;
     color: var(--gold);
-    margin-bottom: 34px;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .hero .eyebrow::before {
+    content: "";
+    width: 54px;
+    height: 1px;
+    background: var(--gold);
   }
   .hero h1 {
     font-family: var(--serif);
     font-weight: 400;
-    font-size: clamp(96px, 24vw, 340px);
-    line-height: 0.82;
-    letter-spacing: 0.02em;
-  }
-  .hero h1 .h {
-    display: block;
-    font-size: clamp(13px, 1.6vw, 20px);
-    font-family: var(--sans);
-    font-weight: 300;
-    letter-spacing: 0.92em;
-    padding-left: 0.92em;
+    font-size: clamp(76px, 15.5vw, 230px);
+    line-height: 0.88;
+    letter-spacing: 0.01em;
     text-transform: uppercase;
-    color: var(--dim);
-    margin-top: 40px;
+  }
+  .hero h1 .ln { display: block; }
+  .hero h1 .ln.ital {
+    font-style: italic;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--ink);
+    margin-left: clamp(30px, 8vw, 140px);
   }
   .hero .thesis {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: clamp(20px, 2.6vw, 32px);
+    max-width: 380px;
+    margin-top: 48px;
+    font-size: 15px;
     color: var(--dim);
-    margin-top: 46px;
+    align-self: flex-end;
+    margin-right: clamp(0px, 6vw, 90px);
   }
-  .hero .thesis em { color: var(--ivory); font-style: italic; }
+  .hero .thesis strong { font-weight: 500; color: var(--ink); }
 
   .hero .cue {
     position: absolute;
-    bottom: 34px;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 30px;
+    left: clamp(24px, 7vw, 110px);
     font-size: 10px;
     letter-spacing: 0.4em;
     text-transform: uppercase;
     color: var(--faint);
   }
-  .hero .cue::after {
-    content: "";
-    display: block;
-    width: 1px;
-    height: 42px;
-    margin: 12px auto 0;
-    background: linear-gradient(var(--gold), transparent);
-    animation: drip 2.2s var(--ease) infinite;
-  }
-  @keyframes drip {
-    0% { transform: scaleY(0); transform-origin: top; }
-    45% { transform: scaleY(1); transform-origin: top; }
-    55% { transform: scaleY(1); transform-origin: bottom; }
-    100% { transform: scaleY(0); transform-origin: bottom; }
-  }
 
-  /* staged hero entrance */
   .stage {
     opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 1.4s var(--ease), transform 1.4s var(--ease);
+    transform: translateY(34px);
+    transition: opacity 1.3s var(--ease), transform 1.3s var(--ease);
   }
   body.begun .stage { opacity: 1; transform: none; }
-  body.begun .stage.s2 { transition-delay: 0.25s; }
-  body.begun .stage.s3 { transition-delay: 0.5s; }
-  body.begun .stage.s4 { transition-delay: 0.9s; }
+  body.begun .stage.s2 { transition-delay: 0.2s; }
+  body.begun .stage.s3 { transition-delay: 0.45s; }
+  body.begun .stage.s4 { transition-delay: 0.75s; }
 
-  /* ---------- maison chapters ---------- */
-  .chapter { height: 260vh; position: relative; }
-  .chapter .scene {
+  /* ---------- the hall (horizontal gallery) ---------- */
+  .hall { height: 340vh; position: relative; }
+  .hall-sticky {
     position: sticky;
     top: 0;
     height: 100svh;
     overflow: hidden;
+  }
+  .hall-head {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 96px clamp(24px, 7vw, 110px) 0;
+    pointer-events: none;
+  }
+  .hall-head .t {
+    font-size: 11px;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .hall-head .n {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 15px;
+    color: var(--faint);
+  }
+  .track {
+    display: flex;
+    height: 100%;
+    width: 300vw;
+    will-change: transform;
+  }
+  .panel {
+    width: 100vw;
+    height: 100%;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
+    padding: 0 clamp(24px, 8vw, 130px);
+    position: relative;
+    border-left: 1px solid var(--hairline);
   }
-  .scene-inner {
-    text-align: center;
-    padding: 0 24px;
-    max-width: 900px;
+  .panel .spill {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.16;
+    background: radial-gradient(60% 55% at 50% 62%, var(--pc, transparent), transparent 70%);
   }
-  .maison-no {
+  .panel-inner { position: relative; max-width: 980px; }
+  .panel .no {
     font-size: 11px;
     font-weight: 400;
     letter-spacing: 0.5em;
     text-transform: uppercase;
     color: var(--gold);
-    margin-bottom: 30px;
+    margin-bottom: 26px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
   }
-  .maison-name {
+  .panel .no .st {
+    color: var(--dim);
+    letter-spacing: 0.3em;
+    border: 1px solid var(--hairline);
+    border-radius: 100px;
+    padding: 4px 12px;
+    font-size: 9px;
+  }
+  .panel h2 {
     font-family: var(--serif);
     font-weight: 400;
-    font-size: clamp(72px, 15vw, 220px);
-    line-height: 0.9;
-    letter-spacing: 0.01em;
+    font-size: clamp(70px, 13vw, 190px);
+    line-height: 0.92;
   }
-  .maison-sub {
+  .panel h2 a {
+    text-decoration: none;
+    transition: color 0.5s var(--ease);
+  }
+  .panel h2 a:hover { color: var(--pc, var(--ink)); }
+  .panel .sub {
     font-family: var(--serif);
     font-style: italic;
-    font-size: clamp(18px, 2.4vw, 28px);
+    font-size: clamp(18px, 2.2vw, 26px);
     color: var(--dim);
-    margin-top: 26px;
+    margin-top: 18px;
   }
-  .maison-copy {
-    max-width: 520px;
-    margin: 30px auto 0;
+  .panel .copy {
+    max-width: 480px;
+    margin-top: 24px;
     font-size: 15px;
     color: var(--dim);
   }
-  .maison-cta {
+  .panel .cta {
     display: inline-block;
-    margin-top: 44px;
+    margin-top: 38px;
     font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.34em;
     text-transform: uppercase;
     text-decoration: none;
-    color: var(--ivory);
-    padding: 16px 34px;
-    border: 1px solid var(--hairline);
+    color: var(--ink);
+    padding: 15px 32px;
+    border: 1px solid var(--ink);
     border-radius: 100px;
     position: relative;
     overflow: hidden;
-    transition: border-color 0.5s, color 0.5s;
+    z-index: 0;
+    transition: color 0.5s;
   }
-  .maison-cta::before {
+  .panel .cta::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: var(--ivory);
+    background: var(--ink);
     transform: translateY(101%);
     transition: transform 0.5s var(--ease);
     z-index: -1;
   }
-  .maison-cta:hover, .maison-cta:focus-visible { color: var(--black); border-color: var(--ivory); }
-  .maison-cta:hover::before, .maison-cta:focus-visible::before { transform: translateY(0); }
-  .maison-cta.soon { color: var(--dim); pointer-events: none; border-style: dashed; }
-
-  .scene .frame {
-    position: absolute;
-    inset: clamp(14px, 3vw, 38px);
-    border: 1px solid var(--hairline);
+  .panel .cta:hover, .panel .cta:focus-visible { color: var(--stone); }
+  .panel .cta:hover::before, .panel .cta:focus-visible::before { transform: translateY(0); }
+  .panel .cta.soon {
+    color: var(--dim);
+    border-color: var(--hairline);
+    border-style: dashed;
     pointer-events: none;
   }
-  .scene .frame::after {
-    content: attr(data-label);
-    position: absolute;
-    bottom: -1px;
-    right: 22px;
-    transform: translateY(50%);
-    background: var(--black);
-    padding: 0 14px;
-    font-size: 10px;
-    letter-spacing: 0.4em;
-    text-transform: uppercase;
-    color: var(--faint);
-    white-space: nowrap;
+  .panel.empty h2 {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--faint);
+    font-style: italic;
   }
 
-  /* ---------- manifesto ---------- */
-  .manifesto {
-    min-height: 90vh;
+  /* ---------- creed ---------- */
+  .creed {
+    min-height: 80vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 140px 24px;
-  }
-  .manifesto p {
-    max-width: 880px;
-    font-family: var(--serif);
-    font-weight: 400;
-    font-size: clamp(30px, 4.6vw, 56px);
-    line-height: 1.25;
     text-align: center;
   }
-  .manifesto .w {
-    display: inline-block;
-    opacity: 0.12;
-    transition: opacity 0.6s var(--ease);
+  .creed-inner { max-width: 860px; }
+  .creed p {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(30px, 4.4vw, 54px);
+    line-height: 1.22;
   }
-  .manifesto .w.lit { opacity: 1; }
-  .manifesto .gold { color: var(--gold); font-style: italic; }
-
-  /* ---------- ledger ---------- */
-  .ledger {
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 60px 28px 140px;
+  .creed .line {
+    display: block;
+    overflow: hidden;
   }
-  .ledger-title {
+  .creed .line > span {
+    display: block;
+    transform: translateY(110%);
+    transition: transform 1.1s var(--ease);
+  }
+  .creed.in .line > span { transform: none; }
+  .creed .line:nth-child(2) > span { transition-delay: 0.15s; }
+  .creed .line:nth-child(3) > span { transition-delay: 0.3s; }
+  .creed .gold { color: var(--gold); font-style: italic; }
+  .creed .sig {
+    margin-top: 44px;
     font-size: 11px;
     letter-spacing: 0.5em;
     text-transform: uppercase;
-    color: var(--gold);
-    text-align: center;
-    margin-bottom: 50px;
-  }
-  .ledger-row {
-    display: grid;
-    grid-template-columns: 90px 1fr auto;
-    align-items: baseline;
-    gap: 26px;
-    padding: 30px 8px;
-    border-top: 1px solid var(--hairline);
-    text-decoration: none;
-    transition: padding-left 0.5s var(--ease);
-  }
-  .ledger-row:last-child { border-bottom: 1px solid var(--hairline); }
-  a.ledger-row:hover { padding-left: 26px; }
-  .ledger-row .no {
-    font-family: var(--serif);
-    font-style: italic;
-    color: var(--faint);
-    font-size: 15px;
-  }
-  .ledger-row .nm {
-    font-family: var(--serif);
-    font-size: clamp(26px, 3.6vw, 42px);
-    line-height: 1.1;
-  }
-  .ledger-row .nm small {
-    display: block;
-    font-family: var(--sans);
-    font-size: 12px;
-    font-weight: 300;
-    letter-spacing: 0.14em;
-    color: var(--dim);
-    margin-top: 6px;
-    text-transform: uppercase;
-  }
-  .ledger-row .st {
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
     color: var(--dim);
   }
-  .ledger-row .st.gold { color: var(--gold); }
 
   /* ---------- footer ---------- */
   footer {
@@ -398,6 +376,8 @@
     gap: 20px;
     align-items: center;
     justify-content: space-between;
+    position: relative;
+    z-index: 2;
   }
   footer .fmark {
     font-family: var(--serif);
@@ -412,41 +392,40 @@
     color: var(--dim);
     text-decoration: none;
   }
-  footer a:hover { color: var(--ivory); }
+  footer a:hover { color: var(--ink); }
 
-  @media (max-width: 720px) {
+  /* ---------- responsive: hall becomes vertical ---------- */
+  @media (max-width: 860px) {
     header { padding: 20px 22px; }
     nav a:not(:last-child) { display: none; }
-    .chapter { height: 200vh; }
-    .ledger-row { grid-template-columns: 44px 1fr; }
-    .ledger-row .st { grid-column: 2; }
-    footer { justify-content: center; text-align: center; }
+    .hall { height: auto; }
+    .hall-sticky { position: static; height: auto; overflow: visible; }
+    .hall-head { position: static; padding: 90px 24px 0; }
+    .track { flex-direction: column; width: 100%; height: auto; transform: none !important; }
+    .panel { width: 100%; min-height: 88svh; border-left: none; border-top: 1px solid var(--hairline); }
+    .hero .thesis { align-self: flex-start; margin-right: 0; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
     html { scroll-behavior: auto; }
-    .stage, .manifesto .w { opacity: 1 !important; transform: none !important; }
-    .veil { display: none; }
-    #silk { opacity: 0.5; }
+    .stage { opacity: 1 !important; transform: none !important; }
+    .creed .line > span { transform: none !important; }
+    .orb { transition: none; }
   }
 </style>
 </head>
 <body>
 
-<canvas id="silk" aria-hidden="true"></canvas>
+<div class="orb" id="orb" aria-hidden="true"></div>
 <div class="grain" aria-hidden="true"></div>
-
-<div class="veil" id="veil" aria-hidden="true"><div class="mark">SEV</div></div>
-
 <div class="progress" id="progress" aria-hidden="true"></div>
 
 <header>
   <a class="brand" href="#top">SEV<span>.</span></a>
   <nav aria-label="Primary">
-    <a href="#ips">IPS</a>
-    <a href="#bookit">BookIt</a>
-    <a href="#ledger">Portfolio</a>
+    <a href="#hall">Maisons</a>
+    <a href="#creed">The house</a>
     <a href="mailto:isaac@isaacpoole.co">Contact</a>
   </nav>
 </header>
@@ -456,74 +435,80 @@
   <!-- ============ HERO ============ -->
   <section class="hero">
     <p class="eyebrow stage">Isaac Poole · Est. MMXXVI</p>
-    <h1 class="stage s2">
-      SEV
-      <span class="h">Holding</span>
+    <h1>
+      <span class="ln stage s2">SEV</span>
+      <span class="ln ital stage s3">Holding</span>
     </h1>
-    <p class="thesis stage s3">The house <em>behind</em> the houses.</p>
-    <p class="cue stage s4">Enter</p>
-  </section>
-
-  <!-- ============ MAISON 01 — IPS ============ -->
-  <section class="chapter" id="ips" data-palette="ips">
-    <div class="scene">
-      <div class="frame" data-label="Maison N°01" aria-hidden="true"></div>
-      <div class="scene-inner" data-cinema>
-        <p class="maison-no">Maison N°01 — Active</p>
-        <h2 class="maison-name">IPS</h2>
-        <p class="maison-sub">Isaac Poole Studio, Inc.</p>
-        <p class="maison-copy">
-          The atelier of the house. IPS conceives, designs, and engineers
-          digital products for clients — from first sketch to shipped software.
-        </p>
-        <a class="maison-cta" href="mailto:isaac@isaacpoole.co?subject=IPS%20—%20New%20project">Commission the studio</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ MAISON 02 — BOOKIT ============ -->
-  <section class="chapter" id="bookit" data-palette="bookit">
-    <div class="scene">
-      <div class="frame" data-label="Maison N°02" aria-hidden="true"></div>
-      <div class="scene-inner" data-cinema>
-        <p class="maison-no">Maison N°02 — In atelier</p>
-        <h2 class="maison-name">BookIt</h2>
-        <p class="maison-sub">Booking, without the back-and-forth.</p>
-        <p class="maison-copy">
-          The house's first product venture, currently taking shape inside the
-          studio. On release, BookIt takes its place as a maison in full.
-        </p>
-        <a class="maison-cta soon" href="#" aria-disabled="true">Unveiling soon</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ MANIFESTO ============ -->
-  <section class="manifesto" aria-label="Manifesto">
-    <p id="creed">
-      A holding is not a headquarters. It is a <span class="gold">quiet</span>
-      signature on the back of the canvas — the houses carry the
-      <span class="gold">name</span>, the name carries the houses.
+    <p class="thesis stage s4">
+      A private house of ventures. <strong>SEV holds the companies;
+      the companies hold the craft.</strong> Walk the hall to meet them.
     </p>
+    <p class="cue stage s4">Scroll — the hall opens</p>
   </section>
 
-  <!-- ============ LEDGER ============ -->
-  <section class="ledger" id="ledger">
-    <p class="ledger-title">The portfolio</p>
-    <a class="ledger-row" href="#ips">
-      <span class="no">N°01</span>
-      <span class="nm">IPS <small>Isaac Poole Studio, Inc. — Design &amp; engineering</small></span>
-      <span class="st gold">Active</span>
-    </a>
-    <a class="ledger-row" href="#bookit">
-      <span class="no">N°02</span>
-      <span class="nm">BookIt <small>Scheduling product — In development</small></span>
-      <span class="st">In atelier</span>
-    </a>
-    <div class="ledger-row">
-      <span class="no">N°03</span>
-      <span class="nm">— <small>The next chair at the table is unclaimed</small></span>
-      <span class="st">Reserved</span>
+  <!-- ============ THE HALL ============ -->
+  <section class="hall" id="hall">
+    <div class="hall-sticky">
+      <div class="hall-head">
+        <p class="t">The maisons</p>
+        <p class="n" id="hallcount">I / III</p>
+      </div>
+      <div class="track" id="track">
+
+        <article class="panel" style="--pc: var(--sapphire)">
+          <div class="spill" aria-hidden="true"></div>
+          <div class="panel-inner">
+            <p class="no">Maison N°01 <span class="st">Active</span></p>
+            <h2><a href="https://isaacpoole.co">IPS</a></h2>
+            <p class="sub">Isaac Poole Studio, Inc.</p>
+            <p class="copy">
+              The atelier of the house. IPS conceives, designs, and engineers
+              digital products for clients — from first sketch to shipped software.
+            </p>
+            <a class="cta" href="https://isaacpoole.co">Visit the studio</a>
+          </div>
+        </article>
+
+        <article class="panel" style="--pc: var(--emerald)">
+          <div class="spill" aria-hidden="true"></div>
+          <div class="panel-inner">
+            <p class="no">Maison N°02 <span class="st">In atelier</span></p>
+            <h2>BookIt</h2>
+            <p class="sub">Booking, without the back-and-forth.</p>
+            <p class="copy">
+              The house's first product venture, currently taking shape inside
+              the studio. On release, BookIt takes its place as a maison in full.
+            </p>
+            <a class="cta soon" href="#" aria-disabled="true">Unveiling soon</a>
+          </div>
+        </article>
+
+        <article class="panel empty" style="--pc: var(--gold)">
+          <div class="spill" aria-hidden="true"></div>
+          <div class="panel-inner">
+            <p class="no">Maison N°03 <span class="st">Reserved</span></p>
+            <h2>Unwritten</h2>
+            <p class="sub">The next chair at the table is unclaimed.</p>
+            <p class="copy">
+              The house keeps an empty room on purpose. Some ventures are
+              acquired; the best ones are grown.
+            </p>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CREED ============ -->
+  <section class="creed" id="creed">
+    <div class="creed-inner">
+      <p>
+        <span class="line"><span>A holding is not a headquarters —</span></span>
+        <span class="line"><span>it is a <span class="gold">quiet signature</span> on the</span></span>
+        <span class="line"><span>back of the canvas.</span></span>
+      </p>
+      <p class="sig">SEV Holding · The house behind the houses</p>
     </div>
   </section>
 
@@ -539,174 +524,57 @@
 (function () {
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* ---------- intro ---------- */
-  var veil = document.getElementById("veil");
-  function begin() {
-    veil.classList.add("gone");
-    document.body.classList.add("begun");
-  }
-  if (reduced) { begin(); }
-  else { setTimeout(begin, 1500); }
-
-  /* ---------- aurora silk ---------- */
-  var canvas = document.getElementById("silk");
-  var ctx = canvas.getContext("2d");
-  var W, H, DPR;
-  function size() {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
-    W = canvas.width = innerWidth * DPR;
-    H = canvas.height = innerHeight * DPR;
-  }
-  size();
-  window.addEventListener("resize", size);
-
-  /* palettes: hero = champagne/violet dusk; ips = sapphire; bookit = emerald */
-  var PALETTES = {
-    hero:   [[201, 169, 107], [110, 90, 200], [40, 60, 140]],
-    ips:    [[70, 110, 255], [140, 90, 255], [201, 169, 107]],
-    bookit: [[20, 190, 150], [40, 120, 200], [201, 169, 107]]
-  };
-  var current = JSON.parse(JSON.stringify(PALETTES.hero));
-  var target = PALETTES.hero;
-
-  var ribbons = [];
-  for (var i = 0; i < 3; i++) {
-    ribbons.push({
-      amp: 0.10 + i * 0.05,
-      yoff: 0.32 + i * 0.18,
-      speed: 0.00011 + i * 0.00005,
-      phase: i * 2.1,
-      width: 0.16 + i * 0.05
-    });
-  }
-
-  function lerpPalette() {
-    for (var i = 0; i < current.length; i++)
-      for (var c = 0; c < 3; c++)
-        current[i][c] += (target[i][c] - current[i][c]) * 0.03;
-  }
-
-  var t0 = 0;
-  function draw(t) {
-    lerpPalette();
-    ctx.clearRect(0, 0, W, H);
-    ctx.globalCompositeOperation = "lighter";
-    for (var i = 0; i < ribbons.length; i++) {
-      var r = ribbons[i];
-      var col = current[i];
-      var grad = ctx.createLinearGradient(0, 0, W, 0);
-      grad.addColorStop(0, "rgba(" + col.map(Math.round).join(",") + ",0)");
-      grad.addColorStop(0.5, "rgba(" + col.map(Math.round).join(",") + ",0.16)");
-      grad.addColorStop(1, "rgba(" + col.map(Math.round).join(",") + ",0)");
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      var yBase = H * r.yoff;
-      ctx.moveTo(0, yBase);
-      for (var x = 0; x <= W; x += W / 60) {
-        var y = yBase
-          + Math.sin(x / W * 4 + t * r.speed * 1000 + r.phase) * H * r.amp
-          + Math.sin(x / W * 9 - t * r.speed * 640 + r.phase * 2) * H * r.amp * 0.4;
-        ctx.lineTo(x, y);
-      }
-      ctx.lineTo(W, yBase + H * r.width);
-      for (var x2 = W; x2 >= 0; x2 -= W / 60) {
-        var y2 = yBase + H * r.width
-          + Math.sin(x2 / W * 4 + t * r.speed * 1000 + r.phase + 0.7) * H * r.amp;
-        ctx.lineTo(x2, y2);
-      }
-      ctx.closePath();
-      var blur = 60 * DPR;
-      ctx.filter = "blur(" + blur + "px)";
-      ctx.fill();
-      ctx.filter = "none";
-    }
-    ctx.globalCompositeOperation = "source-over";
-    if (!reduced) requestAnimationFrame(draw);
-  }
-  if (!reduced) requestAnimationFrame(draw);
-  else { draw(0); }
-
-  /* which palette owns the viewport */
-  var chapters = document.querySelectorAll("[data-palette]");
-  var palIO = new IntersectionObserver(function (entries) {
-    entries.forEach(function (en) {
-      if (en.isIntersecting) target = PALETTES[en.target.getAttribute("data-palette")];
-    });
-  }, { rootMargin: "-40% 0px -40% 0px" });
-  chapters.forEach(function (c) { palIO.observe(c); });
-  /* fall back to hero palette near top of page */
-  window.addEventListener("scroll", function () {
-    if (scrollY < innerHeight * 0.5) target = PALETTES.hero;
-  }, { passive: true });
-
-  /* ---------- scroll progress + chapter cinema ---------- */
-  var progress = document.getElementById("progress");
-  var scenes = [];
-  document.querySelectorAll(".chapter").forEach(function (ch) {
-    scenes.push({ ch: ch, inner: ch.querySelector("[data-cinema]") });
+  /* entrance */
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () { document.body.classList.add("begun"); });
   });
+
+  /* orb drifts with cursor + scroll */
+  var orb = document.getElementById("orb");
+  var mx = 0, my = 0;
+  if (!reduced) {
+    window.addEventListener("pointermove", function (e) {
+      mx = (e.clientX / innerWidth - 0.5) * -50;
+      my = (e.clientY / innerHeight - 0.5) * -36;
+      orb.style.transform = "translate3d(" + mx + "px," + (my + scrollY * -0.04) + "px,0)";
+    }, { passive: true });
+  }
+
+  /* progress + horizontal hall */
+  var progress = document.getElementById("progress");
+  var hall = document.getElementById("hall");
+  var track = document.getElementById("track");
+  var counter = document.getElementById("hallcount");
+  var ROMAN = ["I", "II", "III"];
+  var mobile = window.matchMedia("(max-width: 860px)");
 
   function onScroll() {
     var doc = document.documentElement;
-    var p = scrollY / (doc.scrollHeight - innerHeight);
-    progress.style.transform = "scaleX(" + p + ")";
+    progress.style.transform =
+      "scaleX(" + (scrollY / (doc.scrollHeight - innerHeight)) + ")";
 
-    if (reduced) return;
-    scenes.forEach(function (s) {
-      var rect = s.ch.getBoundingClientRect();
-      var span = rect.height - innerHeight;
-      var prog = Math.min(1, Math.max(0, -rect.top / span)); /* 0→1 through chapter */
-      /* ease in: rise + fade; ease out: drift up */
-      var inP = Math.min(1, prog / 0.35);
-      var outP = Math.max(0, (prog - 0.8) / 0.2);
-      var op = inP * (1 - outP);
-      var ty = (1 - inP) * 60 - outP * 40;
-      var sc = 0.94 + inP * 0.06;
-      s.inner.style.opacity = op;
-      s.inner.style.transform = "translateY(" + ty + "px) scale(" + sc + ")";
-    });
+    if (mobile.matches || reduced) return;
+    var rect = hall.getBoundingClientRect();
+    var span = rect.height - innerHeight;
+    var p = Math.min(1, Math.max(0, -rect.top / span));
+    var panels = 3;
+    track.style.transform =
+      "translateX(" + (-p * (panels - 1) * 100) + "vw)";
+    var idx = Math.min(panels - 1, Math.floor(p * panels));
+    counter.textContent = ROMAN[idx] + " / III";
   }
   window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
   onScroll();
 
-  /* ---------- manifesto: word-by-word light ---------- */
+  /* creed line reveal */
   var creed = document.getElementById("creed");
-  var frag = document.createDocumentFragment();
-  creed.childNodes.forEach ? null : null;
-  (function splitWords() {
-    var nodes = Array.prototype.slice.call(creed.childNodes);
-    nodes.forEach(function (node) {
-      if (node.nodeType === 3) {
-        node.textContent.split(/(\s+)/).forEach(function (piece) {
-          if (/^\s+$/.test(piece) || piece === "") {
-            frag.appendChild(document.createTextNode(" "));
-          } else {
-            var s = document.createElement("span");
-            s.className = "w";
-            s.textContent = piece;
-            frag.appendChild(s);
-          }
-        });
-      } else if (node.nodeType === 1) {
-        node.classList.add("w");
-        frag.appendChild(node);
-      }
-    });
-    creed.innerHTML = "";
-    creed.appendChild(frag);
-  })();
-  var words = creed.querySelectorAll(".w");
-  var wordIO = new IntersectionObserver(function (entries) {
+  var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (en) {
-      if (en.isIntersecting) {
-        words.forEach(function (w, i) {
-          setTimeout(function () { w.classList.add("lit"); }, reduced ? 0 : i * 55);
-        });
-        wordIO.disconnect();
-      }
+      if (en.isIntersecting) { creed.classList.add("in"); io.disconnect(); }
     });
-  }, { threshold: 0.6 });
-  wordIO.observe(creed);
+  }, { threshold: 0.4 });
+  io.observe(creed);
 })();
 </script>
 
