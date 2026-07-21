@@ -65,6 +65,13 @@ export function ShareView({
 
   return (
     <>
+      {allowDownloads && assets.length > 1 && (
+        <div className="mb-5 text-center">
+          <a href={`/api/share/${slug}/zip`} className="btn btn-accent btn-sm">
+            Download all{hasFolders ? " (entire delivery)" : ""}
+          </a>
+        </div>
+      )}
       {hasFolders && (
         <nav className="mb-5 flex flex-wrap items-center gap-1 text-[13px]">
           <a href={folderHref()} className="[color:var(--color-dim)] hover:[color:var(--color-ink)]">Home</a>

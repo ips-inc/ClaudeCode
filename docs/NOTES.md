@@ -209,3 +209,20 @@ Closed the two things between "code-complete" and "actually usable":
   worker canary `bad1164a` still queued, 0 attempts since 07-10: the worker
   service has never claimed a job. Needs Railway MCP connector or a
   RAILWAY_TOKEN to diagnose from here.
+
+## 2026-07-21 (later) — "Download all" zip on share links
+
+- `/api/share/[slug]/zip` streams the whole delivery as ONE zip: store-mode
+  (media is pre-compressed; archive flows at network speed), zip64-capable
+  via archiver@8 (`new ZipArchive` — v8 dropped the factory fn). Entries are
+  presigned + fetched lazily right before entering the archive, so
+  connections never idle past TTL; duplicate filenames get " (n)" suffixes;
+  an unfetchable file becomes a `.unavailable.txt` marker instead of
+  corrupting the bundle.
+- Gating = single-file rules: link re-validated per request, bundle consumes
+  exactly one download slot, audited as `download_zip`.
+- Share page shows "Download all" when downloads are on and >1 file.
+- Proven in `tests/zip-stream.test.ts`: streamed archive validated by
+  python3 zipfile (independent impl), sha256 per entry. 16/16 pass.
+- Caveat noted for deploy: very large bundles are bounded by the platform's
+  max response duration on Vercel — R2 has no egress fee either way.
