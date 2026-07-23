@@ -2,6 +2,14 @@
 
 Short, append-only log across sessions. Newest first.
 
+## 2026-07-23 — Apollo.io MCP wired as a build-time tool
+
+- Added `.mcp.json` registering Apollo's hosted MCP server (`https://mcp.apollo.io/mcp`,
+  streamable-HTTP) with `X-Api-Key: ${APOLLO_API_KEY}` header expansion, so the secret stays
+  out of git. Same posture as the Zoho Books MCP: **build-time tool only** — the deployed app
+  does not read `APOLLO_API_KEY`. New env placeholder in `.env.example`; setup in
+  `docs/APOLLO-MCP.md`. Approve the project-scoped server once via `/mcp` on first load.
+
 ## 2026-07-06
 
 - **Goal pivoted** from "four-tool clone (Poole Studio)" to a secure, multi-tenant **Studio Media
